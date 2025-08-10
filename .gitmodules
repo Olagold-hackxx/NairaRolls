@@ -1,3 +1,6 @@
 [submodule "NairaRollsMultisig/lib/forge-std"]
 	path = NairaRollsMultisig/lib/forge-std
 	url = https://github.com/foundry-rs/forge-std
+[submodule "NairaRollsMultisig/lib/openzeppelin-contracts"]
+	path = NairaRollsMultisig/lib/openzeppelin-contracts
+	url = https://github.com/OpenZeppelin/openzeppelin-contracts
