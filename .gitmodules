@@ -1,0 +1,3 @@
+[submodule "NairaRollsMultisig/lib/forge-std"]
+	path = NairaRollsMultisig/lib/forge-std
+	url = https://github.com/foundry-rs/forge-std
