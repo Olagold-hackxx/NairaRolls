@@ -1,18 +1,18 @@
-'use client'
+"use client"
 
-import { useState } from 'react'
-import { useForm } from 'react-hook-form'
-import { zodResolver } from '@hookform/resolvers/zod'
-import { z } from 'zod'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
-import { Textarea } from '@/components/ui/textarea'
-import { Switch } from '@/components/ui/switch'
-import { Badge } from '@/components/ui/badge'
-import { Separator } from '@/components/ui/separator'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { useState } from "react"
+import { useForm } from "react-hook-form"
+import { zodResolver } from "@hookform/resolvers/zod"
+import { z } from "zod"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import { Textarea } from "@/components/ui/textarea"
+import { Switch } from "@/components/ui/switch"
+import { Badge } from "@/components/ui/badge"
+import { Separator } from "@/components/ui/separator"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import {
   AlertDialog,
   AlertDialogAction,
@@ -23,23 +23,38 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
   AlertDialogTrigger,
-} from '@/components/ui/alert-dialog'
-import { Building2, Users, Shield, Bell, Wallet, Key, Trash2, Plus, Copy, Check, AlertTriangle, SettingsIcon, Mail, Smartphone, Globe } from 'lucide-react'
-import { useAppStore } from '@/lib/store'
-import { useWeb3 } from '@/components/providers/web3-provider'
-import { useToast } from '@/hooks/use-toast'
+} from "@/components/ui/alert-dialog"
+import {
+  Building2,
+  Shield,
+  Bell,
+  Wallet,
+  Key,
+  Trash2,
+  Plus,
+  Copy,
+  Check,
+  AlertTriangle,
+  SettingsIcon,
+  Mail,
+  Smartphone,
+  Info,
+} from "lucide-react"
+import { useAppStore } from "@/lib/store"
+import { useWeb3 } from "@/components/providers/web3-provider"
+import { useToast } from "@/hooks/use-toast"
 
 const organizationSchema = z.object({
-  name: z.string().min(2, 'Organization name must be at least 2 characters'),
+  name: z.string().min(2, "Organization name must be at least 2 characters"),
   description: z.string().optional(),
-  website: z.string().url().optional().or(z.literal('')),
-  contactEmail: z.string().email('Please enter a valid email address'),
+  website: z.string().url().optional().or(z.literal("")),
+  contactEmail: z.string().email("Please enter a valid email address"),
   contactPhone: z.string().optional(),
 })
 
 const multisigSchema = z.object({
   threshold: z.number().min(1).max(10),
-  signers: z.array(z.string()).min(1, 'At least one signer is required')
+  signers: z.array(z.string()).min(1, "At least one signer is required"),
 })
 
 type OrganizationFormData = z.infer<typeof organizationSchema>
@@ -49,35 +64,35 @@ export default function SettingsPage() {
   const { organization, user, setOrganization } = useAppStore()
   const { account, isConnected } = useWeb3()
   const { toast } = useToast()
-  
+
   const [isLoading, setIsLoading] = useState(false)
   const [copiedAddress, setCopiedAddress] = useState<string | null>(null)
-  const [newSignerAddress, setNewSignerAddress] = useState('')
+  const [newSignerAddress, setNewSignerAddress] = useState("")
   const [notifications, setNotifications] = useState({
     emailNotifications: true,
     smsNotifications: false,
     paymentAlerts: true,
     approvalReminders: true,
-    securityAlerts: true
+    securityAlerts: true,
   })
 
   const organizationForm = useForm<OrganizationFormData>({
     resolver: zodResolver(organizationSchema),
     defaultValues: {
-      name: organization?.name || '',
-      description: '',
-      website: '',
-      contactEmail: user?.email || '',
-      contactPhone: '',
-    }
+      name: organization?.name || "",
+      description: "",
+      website: "",
+      contactEmail: user?.email || "",
+      contactPhone: "",
+    },
   })
 
   const multisigForm = useForm<MultisigFormData>({
     resolver: zodResolver(multisigSchema),
     defaultValues: {
       threshold: organization?.multisigThreshold || 2,
-      signers: organization?.signers || []
-    }
+      signers: organization?.signers || [],
+    },
   })
 
   const copyToClipboard = async (text: string, type: string) => {
@@ -86,40 +101,44 @@ export default function SettingsPage() {
       setCopiedAddress(type)
       setTimeout(() => setCopiedAddress(null), 2000)
       toast({
-        title: 'Copied to clipboard',
+        title: "Copied to clipboard",
         description: `${type} address copied successfully`,
       })
     } catch (error) {
       toast({
-        title: 'Failed to copy',
-        description: 'Could not copy to clipboard',
-        variant: 'destructive'
+        title: "Failed to copy",
+        description: "Could not copy to clipboard",
+        variant: "destructive",
       })
     }
   }
 
-  const onOrganizationSubmit = async (data: OrganizationFormData) => {
+  const updateOrganization = async (data: OrganizationFormData) => {
     setIsLoading(true)
     try {
       // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1000))
-      
+      await new Promise((resolve) => setTimeout(resolve, 1000))
+
       if (organization) {
         setOrganization({
           ...organization,
-          name: data.name
+          name: data.name,
+          description: data.description,
+          website: data.website,
+          contactEmail: data.contactEmail,
+          contactPhone: data.contactPhone,
         })
       }
-      
+
       toast({
-        title: 'Settings updated',
-        description: 'Organization settings have been saved successfully',
+        title: "Settings updated",
+        description: "Organization settings have been saved successfully",
       })
     } catch (error) {
       toast({
-        title: 'Update failed',
-        description: 'Failed to update organization settings',
-        variant: 'destructive'
+        title: "Update failed",
+        description: "Failed to update organization settings",
+        variant: "destructive",
       })
     } finally {
       setIsLoading(false)
@@ -128,34 +147,34 @@ export default function SettingsPage() {
 
   const addSigner = () => {
     if (!newSignerAddress) return
-    
-    const currentSigners = multisigForm.getValues('signers')
+
+    const currentSigners = multisigForm.getValues("signers")
     if (currentSigners.includes(newSignerAddress)) {
       toast({
-        title: 'Signer already exists',
-        description: 'This address is already a signer',
-        variant: 'destructive'
+        title: "Signer already exists",
+        description: "This address is already a signer",
+        variant: "destructive",
       })
       return
     }
-    
-    multisigForm.setValue('signers', [...currentSigners, newSignerAddress])
-    setNewSignerAddress('')
-    
+
+    multisigForm.setValue("signers", [...currentSigners, newSignerAddress])
+    setNewSignerAddress("")
+
     toast({
-      title: 'Signer added',
-      description: 'New signer has been added to the multisig wallet',
+      title: "Signer added",
+      description: "New signer has been added to the multisig wallet",
     })
   }
 
   const removeSigner = (address: string) => {
-    const currentSigners = multisigForm.getValues('signers')
-    const updatedSigners = currentSigners.filter(signer => signer !== address)
-    multisigForm.setValue('signers', updatedSigners)
-    
+    const currentSigners = multisigForm.getValues("signers")
+    const updatedSigners = currentSigners.filter((signer) => signer !== address)
+    multisigForm.setValue("signers", updatedSigners)
+
     toast({
-      title: 'Signer removed',
-      description: 'Signer has been removed from the multisig wallet',
+      title: "Signer removed",
+      description: "Signer has been removed from the multisig wallet",
     })
   }
 
@@ -163,25 +182,25 @@ export default function SettingsPage() {
     setIsLoading(true)
     try {
       // Simulate blockchain transaction
-      await new Promise(resolve => setTimeout(resolve, 2000))
-      
+      await new Promise((resolve) => setTimeout(resolve, 2000))
+
       if (organization) {
         setOrganization({
           ...organization,
           multisigThreshold: data.threshold,
-          signers: data.signers
+          signers: data.signers,
         })
       }
-      
+
       toast({
-        title: 'Multisig updated',
-        description: 'Multisig configuration has been updated on-chain',
+        title: "Multisig updated",
+        description: "Multisig configuration has been updated on-chain",
       })
     } catch (error) {
       toast({
-        title: 'Update failed',
-        description: 'Failed to update multisig configuration',
-        variant: 'destructive'
+        title: "Update failed",
+        description: "Failed to update multisig configuration",
+        variant: "destructive",
       })
     } finally {
       setIsLoading(false)
@@ -193,9 +212,7 @@ export default function SettingsPage() {
       {/* Header */}
       <div>
         <h1 className="text-3xl font-bold tracking-tight">Settings</h1>
-        <p className="text-muted-foreground">
-          Manage your organization settings and security configuration
-        </p>
+        <p className="text-muted-foreground">Manage your organization settings and security configuration</p>
       </div>
 
       <Tabs defaultValue="organization" className="space-y-6">
@@ -226,32 +243,20 @@ export default function SettingsPage() {
                 <Building2 className="h-5 w-5" />
                 Organization Information
               </CardTitle>
-              <CardDescription>
-                Update your organization's basic information and contact details
-              </CardDescription>
+              <CardDescription>Update your organization's basic information and contact details</CardDescription>
             </CardHeader>
             <CardContent>
-              <form onSubmit={organizationForm.handleSubmit(onOrganizationSubmit)} className="space-y-4">
+              <form onSubmit={organizationForm.handleSubmit(updateOrganization)} className="space-y-4">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <Label htmlFor="name">Organization Name *</Label>
-                    <Input
-                      id="name"
-                      {...organizationForm.register('name')}
-                      placeholder="Your Organization Name"
-                    />
-                    {organizationForm.formState.errors.name && (
-                      <p className="text-sm text-destructive">
-                        {organizationForm.formState.errors.name.message}
-                      </p>
-                    )}
+                    <Label htmlFor="name">Organization Name</Label>
+                    <Input id="name" {...organizationForm.register("name")} placeholder="Your organization name" />
                   </div>
-                  
                   <div className="space-y-2">
                     <Label htmlFor="website">Website</Label>
                     <Input
                       id="website"
-                      {...organizationForm.register('website')}
+                      {...organizationForm.register("website")}
                       placeholder="https://yourcompany.com"
                     />
                   </div>
@@ -261,40 +266,34 @@ export default function SettingsPage() {
                   <Label htmlFor="description">Description</Label>
                   <Textarea
                     id="description"
-                    {...organizationForm.register('description')}
-                    placeholder="Brief description of your organization..."
+                    {...organizationForm.register("description")}
+                    placeholder="Brief description of your organization"
                     rows={3}
                   />
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <Label htmlFor="contactEmail">Contact Email *</Label>
+                    <Label htmlFor="contactEmail">Contact Email</Label>
                     <Input
                       id="contactEmail"
                       type="email"
-                      {...organizationForm.register('contactEmail')}
+                      {...organizationForm.register("contactEmail")}
                       placeholder="contact@yourcompany.com"
                     />
-                    {organizationForm.formState.errors.contactEmail && (
-                      <p className="text-sm text-destructive">
-                        {organizationForm.formState.errors.contactEmail.message}
-                      </p>
-                    )}
                   </div>
-                  
                   <div className="space-y-2">
                     <Label htmlFor="contactPhone">Contact Phone</Label>
                     <Input
                       id="contactPhone"
-                      {...organizationForm.register('contactPhone')}
-                      placeholder="+234 800 000 0000"
+                      {...organizationForm.register("contactPhone")}
+                      placeholder="+234 xxx xxx xxxx"
                     />
                   </div>
                 </div>
 
                 <Button type="submit" disabled={isLoading}>
-                  {isLoading ? 'Saving...' : 'Save Changes'}
+                  {isLoading ? "Updating..." : "Update Organization"}
                 </Button>
               </form>
             </CardContent>
@@ -307,29 +306,24 @@ export default function SettingsPage() {
                 <Wallet className="h-5 w-5" />
                 Wallet Information
               </CardTitle>
-              <CardDescription>
-                Your organization's wallet addresses and connection status
-              </CardDescription>
+              <CardDescription>Your connected wallet address and connection status</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="flex items-center justify-between p-4 border rounded-lg">
                 <div>
-                  <p className="font-medium">Organization Wallet</p>
-                  <p className="text-sm text-muted-foreground font-mono">
-                    {organization?.walletAddress || 'Not connected'}
+                  <p className="font-medium">Connected Wallet</p>
+                  <p className="text-sm text-muted-foreground font-mono">{account || "No wallet connected"}</p>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    This wallet is used for all organization transactions and multisig operations
                   </p>
                 </div>
                 <div className="flex items-center gap-2">
-                  <Badge variant={isConnected ? 'default' : 'secondary'}>
-                    {isConnected ? 'Connected' : 'Disconnected'}
+                  <Badge variant={isConnected ? "default" : "secondary"}>
+                    {isConnected ? "Connected" : "Disconnected"}
                   </Badge>
-                  {organization?.walletAddress && (
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => copyToClipboard(organization.walletAddress, 'Organization wallet')}
-                    >
-                      {copiedAddress === 'Organization wallet' ? (
+                  {account && (
+                    <Button variant="outline" size="sm" onClick={() => copyToClipboard(account, "Connected wallet")}>
+                      {copiedAddress === "Connected wallet" ? (
                         <Check className="h-4 w-4" />
                       ) : (
                         <Copy className="h-4 w-4" />
@@ -339,30 +333,15 @@ export default function SettingsPage() {
                 </div>
               </div>
 
-              <div className="flex items-center justify-between p-4 border rounded-lg">
-                <div>
-                  <p className="font-medium">Connected Account</p>
-                  <p className="text-sm text-muted-foreground font-mono">
-                    {account || 'No wallet connected'}
+              {/* Wallet Security Notice */}
+              <div className="flex items-start gap-2 p-3 bg-blue-50 dark:bg-blue-950 rounded-lg">
+                <Info className="h-4 w-4 text-blue-600 dark:text-blue-400 flex-shrink-0 mt-0.5" />
+                <div className="text-sm">
+                  <p className="font-medium text-blue-800 dark:text-blue-200">Wallet Security</p>
+                  <p className="text-blue-700 dark:text-blue-300">
+                    This is your organization's primary wallet. All payroll transactions and multisig operations will
+                    use this address. Ensure you have secure access to this wallet at all times.
                   </p>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Badge variant={account ? 'default' : 'secondary'}>
-                    {account ? 'Active' : 'Inactive'}
-                  </Badge>
-                  {account && (
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => copyToClipboard(account, 'Connected account')}
-                    >
-                      {copiedAddress === 'Connected account' ? (
-                        <Check className="h-4 w-4" />
-                      ) : (
-                        <Copy className="h-4 w-4" />
-                      )}
-                    </Button>
-                  )}
                 </div>
               </div>
             </CardContent>
@@ -377,9 +356,7 @@ export default function SettingsPage() {
                 <Shield className="h-5 w-5" />
                 Multi-Signature Configuration
               </CardTitle>
-              <CardDescription>
-                Configure your organization's multi-signature wallet settings
-              </CardDescription>
+              <CardDescription>Configure your organization's multi-signature wallet settings</CardDescription>
             </CardHeader>
             <CardContent>
               <form onSubmit={multisigForm.handleSubmit(updateMultisig)} className="space-y-6">
@@ -391,16 +368,14 @@ export default function SettingsPage() {
                       type="number"
                       min="1"
                       max="10"
-                      {...multisigForm.register('threshold', { valueAsNumber: true })}
+                      {...multisigForm.register("threshold", { valueAsNumber: true })}
                       className="w-20"
                     />
                     <span className="text-sm text-muted-foreground">
-                      out of {multisigForm.watch('signers')?.length || 0} signers required
+                      out of {multisigForm.watch("signers")?.length || 0} signers required
                     </span>
                   </div>
-                  <p className="text-xs text-muted-foreground">
-                    Number of signatures required to approve transactions
-                  </p>
+                  <p className="text-xs text-muted-foreground">Number of signatures required to approve transactions</p>
                 </div>
 
                 <Separator />
@@ -408,13 +383,11 @@ export default function SettingsPage() {
                 <div className="space-y-4">
                   <div className="flex items-center justify-between">
                     <Label>Authorized Signers</Label>
-                    <Badge variant="outline">
-                      {multisigForm.watch('signers')?.length || 0} signers
-                    </Badge>
+                    <Badge variant="outline">{multisigForm.watch("signers")?.length || 0} signers</Badge>
                   </div>
 
                   <div className="space-y-3">
-                    {multisigForm.watch('signers')?.map((signer, index) => (
+                    {multisigForm.watch("signers")?.map((signer, index) => (
                       <div key={index} className="flex items-center justify-between p-3 border rounded-lg">
                         <div className="flex items-center space-x-3">
                           <Key className="h-4 w-4 text-muted-foreground" />
@@ -422,7 +395,9 @@ export default function SettingsPage() {
                             {signer.slice(0, 6)}...{signer.slice(-4)}
                           </span>
                           {signer === account && (
-                            <Badge variant="secondary" className="text-xs">You</Badge>
+                            <Badge variant="secondary" className="text-xs">
+                              You
+                            </Badge>
                           )}
                         </div>
                         <div className="flex items-center space-x-2">
@@ -439,7 +414,7 @@ export default function SettingsPage() {
                           </Button>
                           <AlertDialog>
                             <AlertDialogTrigger asChild>
-                              <Button variant="outline" size="sm" className="text-destructive">
+                              <Button variant="outline" size="sm" className="text-destructive bg-transparent">
                                 <Trash2 className="h-4 w-4" />
                               </Button>
                             </AlertDialogTrigger>
@@ -481,20 +456,18 @@ export default function SettingsPage() {
                 </div>
 
                 <div className="flex items-start space-x-2 p-4 bg-yellow-50 dark:bg-yellow-950/20 border border-yellow-200 dark:border-yellow-800 rounded-lg">
-                  <AlertTriangle className="h-5 w-5 text-yellow-800  flex-shrink-0 mt-0.5" />
+                  <AlertTriangle className="h-5 w-5 text-yellow-600 dark:text-yellow-400 flex-shrink-0 mt-0.5" />
                   <div className="text-sm">
-                    <p className="font-medium text-yellow-800 ">
-                      Important Security Notice
-                    </p>
-                    <p className="text-yellow-700  mt-1">
-                      Changes to multisig configuration require blockchain transactions and may take several minutes to complete.
-                      Ensure you have sufficient gas fees before proceeding.
+                    <p className="font-medium text-yellow-800 dark:text-yellow-200">Important Security Notice</p>
+                    <p className="text-yellow-700 dark:text-yellow-300 mt-1">
+                      Changes to multisig configuration require blockchain transactions and may take several minutes to
+                      complete. Ensure you have sufficient gas fees before proceeding.
                     </p>
                   </div>
                 </div>
 
                 <Button type="submit" disabled={isLoading || !isConnected}>
-                  {isLoading ? 'Updating...' : 'Update Multisig Configuration'}
+                  {isLoading ? "Updating..." : "Update Multisig Configuration"}
                 </Button>
               </form>
             </CardContent>
@@ -509,9 +482,7 @@ export default function SettingsPage() {
                 <Bell className="h-5 w-5" />
                 Notification Preferences
               </CardTitle>
-              <CardDescription>
-                Configure how you want to receive notifications and alerts
-              </CardDescription>
+              <CardDescription>Configure how you want to receive notifications and alerts</CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
               <div className="space-y-4">
@@ -521,14 +492,12 @@ export default function SettingsPage() {
                       <Mail className="h-4 w-4 text-muted-foreground" />
                       <Label>Email Notifications</Label>
                     </div>
-                    <p className="text-sm text-muted-foreground">
-                      Receive notifications via email
-                    </p>
+                    <p className="text-sm text-muted-foreground">Receive notifications via email</p>
                   </div>
                   <Switch
                     checked={notifications.emailNotifications}
                     onCheckedChange={(checked) =>
-                      setNotifications(prev => ({ ...prev, emailNotifications: checked }))
+                      setNotifications((prev) => ({ ...prev, emailNotifications: checked }))
                     }
                   />
                 </div>
@@ -539,15 +508,11 @@ export default function SettingsPage() {
                       <Smartphone className="h-4 w-4 text-muted-foreground" />
                       <Label>SMS Notifications</Label>
                     </div>
-                    <p className="text-sm text-muted-foreground">
-                      Receive notifications via SMS
-                    </p>
+                    <p className="text-sm text-muted-foreground">Receive notifications via SMS</p>
                   </div>
                   <Switch
                     checked={notifications.smsNotifications}
-                    onCheckedChange={(checked) =>
-                      setNotifications(prev => ({ ...prev, smsNotifications: checked }))
-                    }
+                    onCheckedChange={(checked) => setNotifications((prev) => ({ ...prev, smsNotifications: checked }))}
                   />
                 </div>
 
@@ -556,45 +521,33 @@ export default function SettingsPage() {
                 <div className="flex items-center justify-between">
                   <div className="space-y-0.5">
                     <Label>Payment Alerts</Label>
-                    <p className="text-sm text-muted-foreground">
-                      Get notified when payments are processed
-                    </p>
+                    <p className="text-sm text-muted-foreground">Get notified when payments are processed</p>
                   </div>
                   <Switch
                     checked={notifications.paymentAlerts}
-                    onCheckedChange={(checked) =>
-                      setNotifications(prev => ({ ...prev, paymentAlerts: checked }))
-                    }
+                    onCheckedChange={(checked) => setNotifications((prev) => ({ ...prev, paymentAlerts: checked }))}
                   />
                 </div>
 
                 <div className="flex items-center justify-between">
                   <div className="space-y-0.5">
                     <Label>Approval Reminders</Label>
-                    <p className="text-sm text-muted-foreground">
-                      Reminders for pending approvals
-                    </p>
+                    <p className="text-sm text-muted-foreground">Reminders for pending approvals</p>
                   </div>
                   <Switch
                     checked={notifications.approvalReminders}
-                    onCheckedChange={(checked) =>
-                      setNotifications(prev => ({ ...prev, approvalReminders: checked }))
-                    }
+                    onCheckedChange={(checked) => setNotifications((prev) => ({ ...prev, approvalReminders: checked }))}
                   />
                 </div>
 
                 <div className="flex items-center justify-between">
                   <div className="space-y-0.5">
                     <Label>Security Alerts</Label>
-                    <p className="text-sm text-muted-foreground">
-                      Important security notifications
-                    </p>
+                    <p className="text-sm text-muted-foreground">Important security notifications</p>
                   </div>
                   <Switch
                     checked={notifications.securityAlerts}
-                    onCheckedChange={(checked) =>
-                      setNotifications(prev => ({ ...prev, securityAlerts: checked }))
-                    }
+                    onCheckedChange={(checked) => setNotifications((prev) => ({ ...prev, securityAlerts: checked }))}
                   />
                 </div>
               </div>
@@ -612,9 +565,7 @@ export default function SettingsPage() {
                 <SettingsIcon className="h-5 w-5" />
                 Advanced Settings
               </CardTitle>
-              <CardDescription>
-                Advanced configuration options and danger zone
-              </CardDescription>
+              <CardDescription>Advanced configuration options and danger zone</CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
               <div className="space-y-4">
@@ -637,15 +588,9 @@ export default function SettingsPage() {
                     Export your organization's data for backup or migration purposes
                   </p>
                   <div className="flex gap-2">
-                    <Button variant="outline">
-                      Export Employees
-                    </Button>
-                    <Button variant="outline">
-                      Export Transactions
-                    </Button>
-                    <Button variant="outline">
-                      Export All Data
-                    </Button>
+                    <Button variant="outline">Export Employees</Button>
+                    <Button variant="outline">Export Transactions</Button>
+                    <Button variant="outline">Export All Data</Button>
                   </div>
                 </div>
 
@@ -671,8 +616,8 @@ export default function SettingsPage() {
                         <AlertDialogHeader>
                           <AlertDialogTitle>Delete Organization</AlertDialogTitle>
                           <AlertDialogDescription>
-                            This action cannot be undone. This will permanently delete your
-                            organization and remove all associated data from our servers.
+                            This action cannot be undone. This will permanently delete your organization and remove all
+                            associated data from our servers.
                           </AlertDialogDescription>
                         </AlertDialogHeader>
                         <AlertDialogFooter>

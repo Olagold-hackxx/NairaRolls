@@ -3,12 +3,16 @@ export interface User {
   walletAddress: string
   email?: string
   organizationId: string
-  role: 'admin' | 'signer' | 'viewer'
+  role: "admin" | "signer" | "viewer"
 }
 
 export interface Organization {
   id: string
   name: string
+  description?: string
+  website?: string
+  contactEmail?: string
+  contactPhone?: string
   walletAddress: string
   multisigThreshold: number
   signers: string[]
@@ -19,25 +23,32 @@ export interface Employee {
   id: string
   name: string
   walletAddress: string
+  role: string
   salary: string
-  status: 'active' | 'inactive'
-  organizationId: string
-  createdAt: Date
-  updatedAt: Date
+  status: "active" | "inactive"
+  organizationId?: string
+  joinedAt: string
+  createdAt?: Date
+  updatedAt?: Date
 }
 
 export interface PaymentBatch {
   id: string
-  organizationId: string
+  name?: string
+  description?: string
+  organizationId?: string
   createdBy: string
   totalAmount: string
   employeeCount: number
-  status: 'pending' | 'approved' | 'executed' | 'rejected'
+  status: "pending" | "approved" | "executed" | "rejected"
   approvals: string[]
   requiredApprovals: number
-  payments: Payment[]
-  createdAt: Date
+  payments?: Payment[]
+  createdAt: string
   executedAt?: Date
+  rejectedAt?: string
+  rejectionReason?: string
+  rejectedBy?: string
   transactionHash?: string
 }
 
@@ -56,7 +67,31 @@ export interface Transaction {
   batchId: string
   organizationId: string
   totalAmount: string
-  status: 'success' | 'failed' | 'pending'
+  status: "success" | "failed" | "pending"
   gasUsed?: string
   createdAt: Date
+}
+
+export interface Notification {
+  id: string
+  type: "payment" | "approval" | "security" | "rejection" | "system"
+  title: string
+  message: string
+  timestamp: string
+  read: boolean
+  actionUrl?: string
+  metadata?: {
+    batchId?: string
+    amount?: string
+    employeeCount?: number
+    [key: string]: any
+  }
+}
+
+export interface NotificationPreferences {
+  emailNotifications: boolean
+  smsNotifications: boolean
+  paymentAlerts: boolean
+  approvalReminders: boolean
+  securityAlerts: boolean
 }

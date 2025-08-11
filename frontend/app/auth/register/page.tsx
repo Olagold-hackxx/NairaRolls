@@ -87,12 +87,12 @@ export default function RegisterPage() {
     try {
       // Simulate API call
       await new Promise(resolve => setTimeout(resolve, 2000))
-      
+
       toast({
         title: 'Registration successful!',
         description: 'Welcome to NairaRolls. Check your email for next steps.',
       })
-      
+
       // Redirect to onboarding or dashboard
       router.push('/onboarding')
     } catch (error) {
@@ -285,7 +285,7 @@ export default function RegisterPage() {
               <Badge variant="secondary" className="mt-1">Enterprise</Badge>
             </div>
           </div>
-          
+
           <div className="space-y-8">
             <div>
               <h2 className="text-3xl font-bold leading-tight mb-4">
@@ -295,7 +295,7 @@ export default function RegisterPage() {
                 Transform your payroll operations with enterprise-grade security and compliance.
               </p>
             </div>
-            
+
             <div className="space-y-6">
               {benefits.map((benefit, index) => (
                 <div key={index} className="flex gap-4">
@@ -311,7 +311,7 @@ export default function RegisterPage() {
             </div>
           </div>
         </div>
-        
+
         <div className="text-sm text-primary-foreground/60">
           <p>Trusted by finance teams across Nigeria</p>
           <p className="mt-1">₦2.5B+ processed • 99.9% uptime</p>
@@ -326,7 +326,7 @@ export default function RegisterPage() {
               <ArrowLeft className="h-4 w-4 mr-2" />
               Back to home
             </Link>
-            <h1 className="text-2xl font-bold">Create Organization Account</h1>
+            <h1 className="text-2xl font-bold dark:text-white">Create Organization Account</h1>
             <p className="text-muted-foreground mt-2">
               Step {step} of 3: {
                 step === 1 ? 'Organization Details' :
@@ -341,8 +341,8 @@ export default function RegisterPage() {
               <div key={stepNumber} className="flex items-center">
                 <div className={`
                   w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium
-                  ${step >= stepNumber 
-                    ? 'bg-primary text-primary-foreground' 
+                  ${step >= stepNumber
+                    ? 'bg-primary text-primary-foreground'
                     : 'bg-muted text-muted-foreground'
                   }
                 `}>
@@ -375,7 +375,7 @@ export default function RegisterPage() {
                 {step === 3 && 'Review your information and agree to terms'}
               </CardDescription>
             </CardHeader>
-            
+
             <CardContent>
               <form onSubmit={handleSubmit(onSubmit)}>
                 {renderStepContent()}
@@ -410,7 +410,7 @@ export default function RegisterPage() {
               </form>
             </CardContent>
           </Card>
-          
+
           <div className="mt-6 text-center text-sm text-muted-foreground">
             <p>Already have an account?</p>
             <Link href="/auth/login" className="text-primary hover:underline font-medium">
