@@ -1,110 +1,210 @@
-'use client'
+"use client";
 
-import { useState } from 'react'
-import { useForm } from 'react-hook-form'
-import { zodResolver } from '@hookform/resolvers/zod'
-import { z } from 'zod'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
-import { Textarea } from '@/components/ui/textarea'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { Checkbox } from '@/components/ui/checkbox'
-import { Badge } from '@/components/ui/badge'
-import { Building2, ArrowLeft, Users, Shield, Zap, CheckCircle, ArrowRight } from 'lucide-react'
-import { useToast } from '@/hooks/use-toast'
-import Link from 'next/link'
-import { useRouter } from 'next/navigation'
+import { useState } from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Badge } from "@/components/ui/badge";
+import {
+  Building2,
+  ArrowLeft,
+  Users,
+  Shield,
+  Zap,
+  CheckCircle,
+  ArrowRight,
+} from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useAppStore } from "@/lib/store";
+import type { User, Organization, RegistrationData } from "@/lib/types";
 
 const registrationSchema = z.object({
-  organizationName: z.string().min(2, 'Organization name must be at least 2 characters'),
-  organizationType: z.string().min(1, 'Please select organization type'),
-  contactEmail: z.string().email('Please enter a valid email address'),
-  contactName: z.string().min(2, 'Contact name must be at least 2 characters'),
-  phoneNumber: z.string().min(10, 'Please enter a valid phone number'),
+  organizationName: z
+    .string()
+    .min(2, "Organization name must be at least 2 characters"),
+  organizationType: z.string().min(1, "Please select organization type"),
+  contactEmail: z.string().email("Please enter a valid email address"),
+  contactName: z.string().min(2, "Contact name must be at least 2 characters"),
+  phoneNumber: z.string().min(10, "Please enter a valid phone number"),
   description: z.string().optional(),
-  expectedVolume: z.string().min(1, 'Please select expected volume'),
-  agreeToTerms: z.boolean().refine(val => val === true, 'You must agree to the terms'),
-  agreeToMarketing: z.boolean().optional()
-})
+  expectedVolume: z.string().min(1, "Please select expected volume"),
+  agreeToTerms: z
+    .boolean()
+    .refine((val) => val === true, "You must agree to the terms"),
+  agreeToMarketing: z.boolean().optional(),
+});
 
-type RegistrationFormData = z.infer<typeof registrationSchema>
+type RegistrationFormData = z.infer<typeof registrationSchema>;
 
 export default function RegisterPage() {
-  const [step, setStep] = useState(1)
-  const [isLoading, setIsLoading] = useState(false)
-  const { toast } = useToast()
-  const router = useRouter()
+  const [step, setStep] = useState(1);
+  const [isLoading, setIsLoading] = useState(false);
+  const { toast } = useToast();
+  const router = useRouter();
+
+  // Access store actions
+  const { setUser, setOrganization, setRegistrationData } = useAppStore();
 
   const {
     register,
     handleSubmit,
     formState: { errors },
     setValue,
-    watch
+    watch,
+    getValues,
   } = useForm<RegistrationFormData>({
-    resolver: zodResolver(registrationSchema)
-  })
+    resolver: zodResolver(registrationSchema),
+  });
 
   const organizationTypes = [
-    'Small Business (1-50 employees)',
-    'Medium Enterprise (51-500 employees)',
-    'Large Enterprise (500+ employees)',
-    'NGO/Non-Profit',
-    'Government Agency',
-    'Freelancer Platform',
-    'Other'
-  ]
+    "Small Business (1-50 employees)",
+    "Medium Enterprise (51-500 employees)",
+    "Large Enterprise (500+ employees)",
+    "NGO/Non-Profit",
+    "Government Agency",
+    "Freelancer Platform",
+    "Other",
+  ];
 
   const volumeOptions = [
-    'Less than ₦1M monthly',
-    '₦1M - ₦10M monthly',
-    '₦10M - ₦100M monthly',
-    '₦100M+ monthly'
-  ]
+    "Less than ₦1M monthly",
+    "₦1M - ₦10M monthly",
+    "₦10M - ₦100M monthly",
+    "₦100M+ monthly",
+  ];
 
   const benefits = [
     {
       icon: Shield,
-      title: 'Enterprise Security',
-      description: 'MPC wallet technology with multi-signature approvals'
+      title: "Enterprise Security",
+      description: "MPC wallet technology with multi-signature approvals",
     },
     {
       icon: Zap,
-      title: 'Instant Processing',
-      description: 'Process payroll in seconds with cNGN stablecoin'
+      title: "Instant Processing",
+      description: "Process payroll in seconds with cNGN stablecoin",
     },
     {
       icon: Users,
-      title: 'Team Collaboration',
-      description: 'Role-based access and approval workflows'
+      title: "Team Collaboration",
+      description: "Role-based access and approval workflows",
+    },
+  ];
+
+  // Function to validate current step before proceeding
+  const validateCurrentStep = () => {
+    const values = getValues();
+
+    switch (step) {
+      case 1:
+        return (
+          values.organizationName &&
+          values.organizationType &&
+          values.expectedVolume
+        );
+      case 2:
+        return values.contactName && values.contactEmail && values.phoneNumber;
+      case 3:
+        return values.agreeToTerms;
+      default:
+        return true;
     }
-  ]
+  };
+
+  const handleNextStep = () => {
+    if (validateCurrentStep()) {
+      setStep(step + 1);
+    } else {
+      toast({
+        title: "Please complete all required fields",
+        description: "Fill in all required information before proceeding.",
+        variant: "destructive",
+      });
+    }
+  };
 
   const onSubmit = async (data: RegistrationFormData) => {
-    setIsLoading(true)
+    console.log("Form submitted with data:", data);
+    setIsLoading(true);
     try {
       // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 2000))
+      await new Promise((resolve) => setTimeout(resolve, 2000));
+
+      // Create user and organization objects from form data
+      const newUser: User = {
+        id: Date.now().toString(),
+        name: data.contactName,
+        email: data.contactEmail,
+        role: "admin",
+        walletAddress: "",
+        organizationId: Date.now().toString(),
+      };
+
+      const newOrganization = {
+        id: Date.now().toString(),
+        name: data.organizationName,
+        description: data.description || "",
+        contactEmail: data.contactEmail,
+        contactPhone: data.phoneNumber,
+        walletAddress: "",
+        multisigThreshold: 2,
+        signers: [newUser.id],
+        cNGNBalance: "0",
+      };
+
+      const registrationData: RegistrationData = {
+        organizationType: data.organizationType,
+        expectedVolume: data.expectedVolume,
+        primaryContactName: data.contactName,
+        primaryContactPhone: data.phoneNumber,
+        marketingConsent: data.agreeToMarketing || false,
+        registrationDate: new Date().toISOString(),
+        verificationStatus: "pending",
+      };
+
+      // Store in Zustand
+      setUser(newUser);
+      setOrganization(newOrganization);
+      setRegistrationData(registrationData);
 
       toast({
-        title: 'Registration successful!',
-        description: 'Welcome to NairaRolls. Check your email for next steps.',
-      })
+        title: "Registration successful!",
+        description: "Welcome to NairaRolls. Check your email for next steps.",
+      });
 
       // Redirect to onboarding or dashboard
-      router.push('/onboarding')
+      router.push("/dashboard");
     } catch (error) {
       toast({
-        title: 'Registration failed',
-        description: 'Something went wrong. Please try again.',
-        variant: 'destructive'
-      })
+        title: "Registration failed",
+        description: "Something went wrong. Please try again.",
+        variant: "destructive",
+      });
     } finally {
-      setIsLoading(false)
+      setIsLoading(false);
     }
-  }
+  };
 
   const renderStepContent = () => {
     switch (step) {
@@ -115,17 +215,21 @@ export default function RegisterPage() {
               <Label htmlFor="organizationName">Organization Name *</Label>
               <Input
                 id="organizationName"
-                {...register('organizationName')}
+                {...register("organizationName")}
                 placeholder="Acme Corporation"
               />
               {errors.organizationName && (
-                <p className="text-sm text-destructive">{errors.organizationName.message}</p>
+                <p className="text-sm text-destructive">
+                  {errors.organizationName.message}
+                </p>
               )}
             </div>
 
             <div className="space-y-2">
               <Label htmlFor="organizationType">Organization Type *</Label>
-              <Select onValueChange={(value) => setValue('organizationType', value)}>
+              <Select
+                onValueChange={(value) => setValue("organizationType", value)}
+              >
                 <SelectTrigger>
                   <SelectValue placeholder="Select organization type" />
                 </SelectTrigger>
@@ -138,13 +242,17 @@ export default function RegisterPage() {
                 </SelectContent>
               </Select>
               {errors.organizationType && (
-                <p className="text-sm text-destructive">{errors.organizationType.message}</p>
+                <p className="text-sm text-destructive">
+                  {errors.organizationType.message}
+                </p>
               )}
             </div>
 
             <div className="space-y-2">
               <Label htmlFor="expectedVolume">Expected Monthly Volume *</Label>
-              <Select onValueChange={(value) => setValue('expectedVolume', value)}>
+              <Select
+                onValueChange={(value) => setValue("expectedVolume", value)}
+              >
                 <SelectTrigger>
                   <SelectValue placeholder="Select expected volume" />
                 </SelectTrigger>
@@ -157,7 +265,9 @@ export default function RegisterPage() {
                 </SelectContent>
               </Select>
               {errors.expectedVolume && (
-                <p className="text-sm text-destructive">{errors.expectedVolume.message}</p>
+                <p className="text-sm text-destructive">
+                  {errors.expectedVolume.message}
+                </p>
               )}
             </div>
 
@@ -165,13 +275,13 @@ export default function RegisterPage() {
               <Label htmlFor="description">Brief Description (Optional)</Label>
               <Textarea
                 id="description"
-                {...register('description')}
+                {...register("description")}
                 placeholder="Tell us about your organization and payroll needs..."
                 rows={3}
               />
             </div>
           </div>
-        )
+        );
 
       case 2:
         return (
@@ -180,11 +290,13 @@ export default function RegisterPage() {
               <Label htmlFor="contactName">Primary Contact Name *</Label>
               <Input
                 id="contactName"
-                {...register('contactName')}
+                {...register("contactName")}
                 placeholder="John Doe"
               />
               {errors.contactName && (
-                <p className="text-sm text-destructive">{errors.contactName.message}</p>
+                <p className="text-sm text-destructive">
+                  {errors.contactName.message}
+                </p>
               )}
             </div>
 
@@ -193,11 +305,13 @@ export default function RegisterPage() {
               <Input
                 id="contactEmail"
                 type="email"
-                {...register('contactEmail')}
+                {...register("contactEmail")}
                 placeholder="john@company.com"
               />
               {errors.contactEmail && (
-                <p className="text-sm text-destructive">{errors.contactEmail.message}</p>
+                <p className="text-sm text-destructive">
+                  {errors.contactEmail.message}
+                </p>
               )}
             </div>
 
@@ -205,15 +319,17 @@ export default function RegisterPage() {
               <Label htmlFor="phoneNumber">Phone Number *</Label>
               <Input
                 id="phoneNumber"
-                {...register('phoneNumber')}
+                {...register("phoneNumber")}
                 placeholder="+234 800 000 0000"
               />
               {errors.phoneNumber && (
-                <p className="text-sm text-destructive">{errors.phoneNumber.message}</p>
+                <p className="text-sm text-destructive">
+                  {errors.phoneNumber.message}
+                </p>
               )}
             </div>
           </div>
-        )
+        );
 
       case 3:
         return (
@@ -222,31 +338,53 @@ export default function RegisterPage() {
               <div className="flex items-start space-x-3">
                 <Checkbox
                   id="agreeToTerms"
-                  onCheckedChange={(checked) => setValue('agreeToTerms', checked as boolean)}
+                  onCheckedChange={(checked) =>
+                    setValue("agreeToTerms", checked as boolean)
+                  }
                 />
                 <div className="grid gap-1.5 leading-none">
-                  <Label htmlFor="agreeToTerms" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+                  <Label
+                    htmlFor="agreeToTerms"
+                    className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                  >
                     I agree to the Terms of Service and Privacy Policy *
                   </Label>
                   <p className="text-xs text-muted-foreground">
-                    By checking this box, you agree to our{' '}
-                    <Link href="/terms" className="text-primary hover:underline">Terms of Service</Link>
-                    {' '}and{' '}
-                    <Link href="/privacy" className="text-primary hover:underline">Privacy Policy</Link>
+                    By checking this box, you agree to our{" "}
+                    <Link
+                      href="/terms"
+                      className="text-primary hover:underline"
+                    >
+                      Terms of Service
+                    </Link>{" "}
+                    and{" "}
+                    <Link
+                      href="/privacy"
+                      className="text-primary hover:underline"
+                    >
+                      Privacy Policy
+                    </Link>
                   </p>
                 </div>
               </div>
-              {errors.agreeToTerms && (
-                <p className="text-sm text-destructive">{errors.agreeToTerms.message}</p>
-              )}
+              {/* {errors.agreeToTerms && (
+                <p className="text-sm text-destructive">
+                  {errors.agreeToTerms.message}
+                </p>
+              )} */}
 
               <div className="flex items-start space-x-3">
                 <Checkbox
                   id="agreeToMarketing"
-                  onCheckedChange={(checked) => setValue('agreeToMarketing', checked as boolean)}
+                  onCheckedChange={(checked) =>
+                    setValue("agreeToMarketing", checked as boolean)
+                  }
                 />
                 <div className="grid gap-1.5 leading-none">
-                  <Label htmlFor="agreeToMarketing" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+                  <Label
+                    htmlFor="agreeToMarketing"
+                    className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                  >
                     Send me product updates and marketing communications
                   </Label>
                   <p className="text-xs text-muted-foreground">
@@ -266,12 +404,12 @@ export default function RegisterPage() {
               </ul>
             </div>
           </div>
-        )
+        );
 
       default:
-        return null
+        return null;
     }
-  }
+  };
 
   return (
     <div className="min-h-screen flex">
@@ -282,7 +420,9 @@ export default function RegisterPage() {
             <Building2 className="h-10 w-10" />
             <div>
               <h1 className="text-2xl font-bold">NairaRolls</h1>
-              <Badge variant="secondary" className="mt-1">Enterprise</Badge>
+              <Badge variant="secondary" className="mt-1">
+                Enterprise
+              </Badge>
             </div>
           </div>
 
@@ -292,7 +432,8 @@ export default function RegisterPage() {
                 Join 500+ Organizations
               </h2>
               <p className="text-lg text-primary-foreground/80">
-                Transform your payroll operations with enterprise-grade security and compliance.
+                Transform your payroll operations with enterprise-grade security
+                and compliance.
               </p>
             </div>
 
@@ -322,16 +463,23 @@ export default function RegisterPage() {
       <div className="flex-1 flex items-center justify-center p-8 bg-gray-50 dark:bg-gray-900">
         <div className="w-full max-w-md">
           <div className="mb-8">
-            <Link href="/" className="inline-flex items-center text-sm text-slate-600 hover:text-primary mb-6 transition-colors">
+            <Link
+              href="/"
+              className="inline-flex items-center text-sm text-slate-600 hover:text-primary mb-6 transition-colors"
+            >
               <ArrowLeft className="h-4 w-4 mr-2" />
               Back to home
             </Link>
-            <h1 className="text-2xl font-bold dark:text-white">Create Organization Account</h1>
+            <h1 className="text-2xl font-bold dark:text-white">
+              Create Organization Account
+            </h1>
             <p className="text-muted-foreground mt-2">
-              Step {step} of 3: {
-                step === 1 ? 'Organization Details' :
-                step === 2 ? 'Contact Information' : 'Terms & Confirmation'
-              }
+              Step {step} of 3:{" "}
+              {step === 1
+                ? "Organization Details"
+                : step === 2
+                ? "Contact Information"
+                : "Terms & Confirmation"}
             </p>
           </div>
 
@@ -339,13 +487,16 @@ export default function RegisterPage() {
           <div className="flex items-center space-x-4 mb-8">
             {[1, 2, 3].map((stepNumber) => (
               <div key={stepNumber} className="flex items-center">
-                <div className={`
+                <div
+                  className={`
                   w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium
-                  ${step >= stepNumber
-                    ? 'bg-primary text-primary-foreground'
-                    : 'bg-muted text-muted-foreground'
+                  ${
+                    step >= stepNumber
+                      ? "bg-primary text-primary-foreground"
+                      : "bg-muted text-muted-foreground"
                   }
-                `}>
+                `}
+                >
                   {step > stepNumber ? (
                     <CheckCircle className="h-4 w-4" />
                   ) : (
@@ -353,10 +504,12 @@ export default function RegisterPage() {
                   )}
                 </div>
                 {stepNumber < 3 && (
-                  <div className={`
+                  <div
+                    className={`
                     w-12 h-0.5 mx-2
-                    ${step > stepNumber ? 'bg-primary' : 'bg-muted'}
-                  `} />
+                    ${step > stepNumber ? "bg-primary" : "bg-muted"}
+                  `}
+                  />
                 )}
               </div>
             ))}
@@ -365,14 +518,14 @@ export default function RegisterPage() {
           <Card>
             <CardHeader>
               <CardTitle className="text-lg">
-                {step === 1 && 'Organization Information'}
-                {step === 2 && 'Contact Details'}
-                {step === 3 && 'Review & Confirm'}
+                {step === 1 && "Organization Information"}
+                {step === 2 && "Contact Details"}
+                {step === 3 && "Review & Confirm"}
               </CardTitle>
               <CardDescription>
-                {step === 1 && 'Tell us about your organization'}
-                {step === 2 && 'How can we reach you?'}
-                {step === 3 && 'Review your information and agree to terms'}
+                {step === 1 && "Tell us about your organization"}
+                {step === 2 && "How can we reach you?"}
+                {step === 3 && "Review your information and agree to terms"}
               </CardDescription>
             </CardHeader>
 
@@ -391,19 +544,13 @@ export default function RegisterPage() {
                   </Button>
 
                   {step < 3 ? (
-                    <Button
-                      type="button"
-                      onClick={() => setStep(step + 1)}
-                    >
+                    <Button type="button" onClick={handleNextStep}>
                       Next
                       <ArrowRight className="h-4 w-4 ml-2" />
                     </Button>
                   ) : (
-                    <Button
-                      type="submit"
-                      disabled={isLoading}
-                    >
-                      {isLoading ? 'Creating Account...' : 'Create Account'}
+                    <Button type="submit" disabled={isLoading}>
+                      {isLoading ? "Creating Account..." : "Create Account"}
                     </Button>
                   )}
                 </div>
@@ -413,12 +560,15 @@ export default function RegisterPage() {
 
           <div className="mt-6 text-center text-sm text-muted-foreground">
             <p>Already have an account?</p>
-            <Link href="/auth/login" className="text-primary hover:underline font-medium">
+            <Link
+              href="/auth/login"
+              className="text-primary hover:underline font-medium"
+            >
               Sign in here →
             </Link>
           </div>
         </div>
       </div>
     </div>
-  )
+  );
 }

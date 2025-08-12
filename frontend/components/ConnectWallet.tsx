@@ -66,7 +66,15 @@ const ConnectWallet = ({
         <ConnectButton
           client={thirdwebClient}
           appMetadata={metadata}
-          connectButton={{ label, style: { color: "white" } }}
+          connectButton={{
+            label,
+            style: {
+              color: "white",
+              height: "32px",
+              minHeight: "32px",
+              fontSize: "14px",
+            },
+          }}
           wallets={wallets}
           connectModal={{ size: "compact" }}
           chain={baseSepolia} // Set default chain

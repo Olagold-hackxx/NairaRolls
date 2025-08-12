@@ -1,38 +1,45 @@
 import { create } from "zustand"
 import { persist } from "zustand/middleware"
-import type { User, Organization, Employee, PaymentBatch, Notification, NotificationPreferences } from "./types"
+import type { User, Organization, Employee, PaymentBatch, Notification, NotificationPreferences, RegistrationData } from "./types"
 
 interface AppState {
   // Auth
-  user: User | null
-  organization: Organization | null
-  isAuthenticated: boolean
+  user: User | null;
+  organization: Organization | null;
+  isAuthenticated: boolean;
+
+  registrationData: RegistrationData | null;
 
   // Data
-  employees: Employee[]
-  paymentBatches: PaymentBatch[]
+  employees: Employee[];
+  paymentBatches: PaymentBatch[];
 
-  notifications: Notification[]
-  notificationPreferences: NotificationPreferences
+  notifications: Notification[];
+  notificationPreferences: NotificationPreferences;
 
   // UI State
-  sidebarOpen: boolean
+  sidebarOpen: boolean;
 
   // Actions
-  setUser: (user: User | null) => void
-  setOrganization: (org: Organization | null) => void
-  setEmployees: (employees: Employee[]) => void
-  setPaymentBatches: (batches: PaymentBatch[]) => void
-  setSidebarOpen: (open: boolean) => void
+  setUser: (user: User | null) => void;
+  setOrganization: (org: Organization | null) => void;
+  setEmployees: (employees: Employee[]) => void;
+  setPaymentBatches: (batches: PaymentBatch[]) => void;
+  setSidebarOpen: (open: boolean) => void;
 
-  addNotification: (notification: Omit<Notification, "id" | "timestamp" | "read">) => void
-  markNotificationAsRead: (id: string) => void
-  markAllNotificationsAsRead: () => void
-  removeNotification: (id: string) => void
-  setNotificationPreferences: (preferences: NotificationPreferences) => void
-  addEmployee: (employee: Employee) => void
+  addNotification: (
+    notification: Omit<Notification, "id" | "timestamp" | "read">
+  ) => void;
+  markNotificationAsRead: (id: string) => void;
+  markAllNotificationsAsRead: () => void;
+  removeNotification: (id: string) => void;
+  setNotificationPreferences: (preferences: NotificationPreferences) => void;
+  addEmployee: (employee: Employee) => void;
 
-  logout: () => void
+  setRegistrationData: (data: RegistrationData) => void;
+  clearRegistrationData: () => void;
+
+  logout: () => void;
 }
 
 export const useAppStore = create<AppState>()(
@@ -42,6 +49,7 @@ export const useAppStore = create<AppState>()(
       user: null,
       organization: null,
       isAuthenticated: false,
+      registrationData: null,
       employees: [
         {
           id: "1",
@@ -125,39 +133,47 @@ export const useAppStore = create<AppState>()(
           id: Date.now().toString(),
           timestamp: new Date().toISOString(),
           read: false,
-        }
+        };
         set((state) => ({
           notifications: [newNotification, ...state.notifications],
-        }))
+        }));
       },
 
       markNotificationAsRead: (id) => {
         set((state) => ({
-          notifications: state.notifications.map((notif) => (notif.id === id ? { ...notif, read: true } : notif)),
-        }))
+          notifications: state.notifications.map((notif) =>
+            notif.id === id ? { ...notif, read: true } : notif
+          ),
+        }));
       },
 
       markAllNotificationsAsRead: () => {
         set((state) => ({
-          notifications: state.notifications.map((notif) => ({ ...notif, read: true })),
-        }))
+          notifications: state.notifications.map((notif) => ({
+            ...notif,
+            read: true,
+          })),
+        }));
       },
 
       removeNotification: (id) => {
         set((state) => ({
           notifications: state.notifications.filter((notif) => notif.id !== id),
-        }))
+        }));
       },
 
       setNotificationPreferences: (preferences) => {
-        set({ notificationPreferences: preferences })
+        set({ notificationPreferences: preferences });
       },
 
       addEmployee: (employee) => {
         set((state) => ({
           employees: [...state.employees, employee],
-        }))
+        }));
       },
+
+      setRegistrationData: (registrationData) => set({ registrationData }),
+      clearRegistrationData: () => set({ registrationData: null }),
 
       logout: () =>
         set({
@@ -167,6 +183,7 @@ export const useAppStore = create<AppState>()(
           employees: [],
           paymentBatches: [],
           notifications: [],
+          registrationData: null, // Clear registration data on logout
         }),
     }),
     {
@@ -176,7 +193,8 @@ export const useAppStore = create<AppState>()(
         organization: state.organization,
         isAuthenticated: state.isAuthenticated,
         notificationPreferences: state.notificationPreferences,
+        registrationData: state.registrationData, // Persist registration data
       }),
-    },
-  ),
-)
+    }
+  )
+);
