@@ -44,7 +44,7 @@ contract NairaRollsMultisig {
     }
 
     // State Variables
-    IERC20 public constant cNGN = IERC20(0xa1F8BD1892C85746AE71B97C31B1965C4641f1F0);
+    IERC20 public immutable cNGN; // Changed to immutable, set in constructor
 
     address[] public signers;
     mapping(address => bool) public isSigner;
@@ -58,7 +58,7 @@ contract NairaRollsMultisig {
     uint256 public pauseVotes;
     mapping(address => bool) public pauseVoters;
 
-    // Custom errors (saves gas and reduces size)
+    // Custom errors
     error NotSigner();
     error ContractPaused();
     error TransactionNotFound();
@@ -100,9 +100,12 @@ contract NairaRollsMultisig {
     }
 
     // Constructor
-    constructor(address[] memory _signers, uint256 _threshold) {
+    constructor(address[] memory _signers, uint256 _threshold, address _cNGN) {
         if (_signers.length == 0) revert InvalidSigner();
         if (_threshold == 0 || _threshold > _signers.length) revert InvalidThreshold();
+        if (_cNGN == address(0)) revert InvalidSigner();
+
+        cNGN = IERC20(_cNGN); // Set cNGN address
 
         for (uint256 i = 0; i < _signers.length; i++) {
             if (_signers[i] == address(0)) revert InvalidSigner();
