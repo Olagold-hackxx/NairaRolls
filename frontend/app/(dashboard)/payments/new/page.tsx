@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { z } from "zod"
@@ -8,7 +8,6 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Textarea } from "@/components/ui/textarea"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
@@ -27,16 +26,21 @@ import {
   Clock,
   FileText,
   Settings,
+  Plus,
+  Trash2,
+  UserCheck,
 } from "lucide-react"
 import { useAppStore } from "@/lib/store"
-import { useAccount } from "@/lib/thirdweb-hooks";
+import { useAccount } from "@/lib/thirdweb-hooks"
 import Link from "next/link"
 import { toast } from "sonner"
 
 const paymentSchema = z.object({
   batchName: z.string().min(1, "Batch name is required").max(100, "Batch name too long"),
-  description: z.string().min(1, "Description is required").max(500, "Description too long"),
-  totalSigners: z.number().min(3, "Minimum 3 signers required").max(20, "Maximum 20 signers allowed"),
+  signerAddresses: z
+    .array(z.string().regex(/^0x[a-fA-F0-9]{40}$/, "Invalid wallet address"))
+    .min(3, "Minimum 3 signers required")
+    .max(20, "Maximum 20 signers allowed"),
   signatoryPercentage: z.number().min(60, "Minimum 60% signatory required").max(100, "Maximum 100%"),
   selectedEmployees: z.array(z.string()).min(1, "Select at least one employee"),
   customAmounts: z.record(z.string(), z.string().min(1, "Amount is required")),
@@ -48,10 +52,11 @@ export default function NewPaymentPage() {
   const [step, setStep] = useState(1)
   const [selectedEmployees, setSelectedEmployees] = useState<string[]>([])
   const [customAmounts, setCustomAmounts] = useState<Record<string, string>>({})
+  const [signerAddresses, setSignerAddresses] = useState<string[]>(["", "", ""])
   const [isSubmitting, setIsSubmitting] = useState(false)
 
   const { employees, organization } = useAppStore()
-  const { isConnected } = useAccount();
+  const { isConnected } = useAccount()
 
   const {
     register,
@@ -63,8 +68,7 @@ export default function NewPaymentPage() {
     resolver: zodResolver(paymentSchema),
     defaultValues: {
       batchName: "",
-      description: "",
-      totalSigners: 3,
+      signerAddresses: ["", "", ""],
       signatoryPercentage: 60,
       selectedEmployees: [],
       customAmounts: {},
@@ -72,54 +76,85 @@ export default function NewPaymentPage() {
   })
 
   const watchedValues = watch()
-  const totalSigners = watch("totalSigners") || 3
   const signatoryPercentage = watch("signatoryPercentage") || 60
+  const totalSigners = watchedValues.signerAddresses.filter((addr) => addr.trim() !== "").length
   const requiredApprovals = Math.ceil((totalSigners * signatoryPercentage) / 100)
+
+  useEffect(() => {
+    setValue(
+      "signerAddresses",
+      signerAddresses.filter((addr) => addr.trim() !== ""),
+    )
+  }, [signerAddresses, setValue])
+
+  useEffect(() => {
+    setValue("selectedEmployees", selectedEmployees)
+  }, [selectedEmployees, setValue])
+
+  useEffect(() => {
+    setValue("customAmounts", customAmounts)
+  }, [customAmounts, setValue])
 
   const handleEmployeeSelect = (employeeId: string, checked: boolean) => {
     if (checked) {
       const newSelected = [...selectedEmployees, employeeId]
       setSelectedEmployees(newSelected)
-      setValue("selectedEmployees", newSelected)
 
       const employee = employees.find((e) => e.id === employeeId)
-      if (employee) {
-        const newAmounts = {
-          ...customAmounts,
+      if (employee && !customAmounts[employeeId]) {
+        setCustomAmounts((prev) => ({
+          ...prev,
           [employeeId]: employee.salary,
-        }
-        setCustomAmounts(newAmounts)
-        setValue("customAmounts", newAmounts)
+        }))
       }
     } else {
-      const newSelected = selectedEmployees.filter((id) => id !== employeeId)
-      setSelectedEmployees(newSelected)
-      setValue("selectedEmployees", newSelected)
-
-      const { [employeeId]: _, ...newAmounts } = customAmounts
-      setCustomAmounts(newAmounts)
-      setValue("customAmounts", newAmounts)
+      setSelectedEmployees((prev) => prev.filter((id) => id !== employeeId))
+      setCustomAmounts((prev) => {
+        const { [employeeId]: _, ...rest } = prev
+        return rest
+      })
     }
   }
 
   const handleAmountChange = (employeeId: string, amount: string) => {
-    const newAmounts = {
-      ...customAmounts,
+    setCustomAmounts((prev) => ({
+      ...prev,
       [employeeId]: amount,
+    }))
+  }
+
+  const handleSignerAddressChange = (index: number, address: string) => {
+    const newAddresses = [...signerAddresses]
+    newAddresses[index] = address
+    setSignerAddresses(newAddresses)
+    setValue("signerAddresses", newAddresses)
+  }
+
+  const addSignerAddress = () => {
+    if (signerAddresses.length < 20) {
+      const newAddresses = [...signerAddresses, ""]
+      setSignerAddresses(newAddresses)
+      setValue("signerAddresses", newAddresses)
     }
-    setCustomAmounts(newAmounts)
-    setValue("customAmounts", newAmounts)
+  }
+
+  const removeSignerAddress = (index: number) => {
+    if (signerAddresses.length > 3) {
+      const newAddresses = signerAddresses.filter((_, i) => i !== index)
+      setSignerAddresses(newAddresses)
+      setValue("signerAddresses", newAddresses)
+    }
   }
 
   const totalAmount = selectedEmployees.reduce((sum, employeeId) => {
     return sum + Number.parseFloat(customAmounts[employeeId] || "0")
   }, 0)
 
-  const progress = (step / 4) * 100
+  const progress = (step / 5) * 100
 
   const onSubmit = async (data: PaymentFormData) => {
     if (!isConnected) {
-      toast.warning("Please connect your wallet first.");
+      toast.warning("Please connect your wallet first.")
       return
     }
 
@@ -146,10 +181,12 @@ export default function NewPaymentPage() {
     // }
   }
 
-  const canProceedToStep2 =
-    watchedValues.batchName && watchedValues.description && totalSigners >= 3 && signatoryPercentage >= 60
-  const canProceedToStep3 = selectedEmployees.length > 0
-  const canProceedToStep4 =
+  const canProceedToStep2 = watchedValues.batchName && signatoryPercentage >= 60
+  const canProceedToStep3 =
+    watchedValues.signerAddresses &&
+    watchedValues.signerAddresses.filter((addr) => addr.trim() !== "" && /^0x[a-fA-F0-9]{40}$/.test(addr)).length >= 3
+  const canProceedToStep4 = selectedEmployees.length > 0
+  const canProceedToStep5 =
     totalAmount > 0 && selectedEmployees.every((id) => customAmounts[id] && Number.parseFloat(customAmounts[id]) > 0)
 
   const renderStepContent = () => {
@@ -162,9 +199,7 @@ export default function NewPaymentPage() {
                 <FileText className="h-8 w-8 text-primary" />
               </div>
               <h2 className="text-2xl font-bold mb-2">Batch Details</h2>
-              <p className="text-muted-foreground">
-                Set up your payment batch name, description, and approval requirements
-              </p>
+              <p className="text-muted-foreground">Set up your payment batch name and approval requirements</p>
             </div>
 
             <div className="grid gap-6">
@@ -180,59 +215,25 @@ export default function NewPaymentPage() {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="description">Description *</Label>
-                <Textarea
-                  id="description"
-                  {...register("description")}
-                  placeholder="Describe this payment batch (e.g., Monthly salary payment for all active employees)"
-                  rows={3}
-                  className={errors.description ? "border-destructive" : ""}
-                />
-                {errors.description && <p className="text-sm text-destructive">{errors.description.message}</p>}
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="totalSigners">Total Number of Signers *</Label>
-                  <Select
-                    value={totalSigners.toString()}
-                    onValueChange={(value) => setValue("totalSigners", Number.parseInt(value))}
-                  >
-                    <SelectTrigger className={errors.totalSigners ? "border-destructive" : ""}>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {Array.from({ length: 18 }, (_, i) => i + 3).map((num) => (
-                        <SelectItem key={num} value={num.toString()}>
-                          {num} signers
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  {errors.totalSigners && <p className="text-sm text-destructive">{errors.totalSigners.message}</p>}
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="signatoryPercentage">Required Signatory Percentage *</Label>
-                  <Select
-                    value={signatoryPercentage.toString()}
-                    onValueChange={(value) => setValue("signatoryPercentage", Number.parseInt(value))}
-                  >
-                    <SelectTrigger className={errors.signatoryPercentage ? "border-destructive" : ""}>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {Array.from({ length: 9 }, (_, i) => 60 + i * 5).map((percentage) => (
-                        <SelectItem key={percentage} value={percentage.toString()}>
-                          {percentage}%
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  {errors.signatoryPercentage && (
-                    <p className="text-sm text-destructive">{errors.signatoryPercentage.message}</p>
-                  )}
-                </div>
+                <Label htmlFor="signatoryPercentage">Required Signatory Percentage *</Label>
+                <Select
+                  value={signatoryPercentage.toString()}
+                  onValueChange={(value) => setValue("signatoryPercentage", Number.parseInt(value))}
+                >
+                  <SelectTrigger className={errors.signatoryPercentage ? "border-destructive" : ""}>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {Array.from({ length: 9 }, (_, i) => 60 + i * 5).map((percentage) => (
+                      <SelectItem key={percentage} value={percentage.toString()}>
+                        {percentage}%
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                {errors.signatoryPercentage && (
+                  <p className="text-sm text-destructive">{errors.signatoryPercentage.message}</p>
+                )}
               </div>
 
               {/* Approval Calculation Display */}
@@ -241,18 +242,14 @@ export default function NewPaymentPage() {
                   <Settings className="h-5 w-5" />
                   <span className="font-medium">Approval Configuration</span>
                 </div>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
-                  <div>
-                    <p className="text-muted-foreground">Total Signers</p>
-                    <p className="font-semibold text-lg">{totalSigners}</p>
-                  </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
                   <div>
                     <p className="text-muted-foreground">Required Percentage</p>
                     <p className="font-semibold text-lg">{signatoryPercentage}%</p>
                   </div>
                   <div>
                     <p className="text-muted-foreground">Approvals Needed</p>
-                    <p className="font-semibold text-lg text-primary">{requiredApprovals}</p>
+                    <p className="font-semibold text-lg text-primary">{requiredApprovals} (based on signers)</p>
                   </div>
                 </div>
               </div>
@@ -261,6 +258,85 @@ export default function NewPaymentPage() {
         )
 
       case 2:
+        return (
+          <div className="space-y-6">
+            <div className="text-center pb-6">
+              <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
+                <UserCheck className="h-8 w-8 text-primary" />
+              </div>
+              <h2 className="text-2xl font-bold mb-2">Configure Signers</h2>
+              <p className="text-muted-foreground">Add wallet addresses of authorized signers (minimum 3 required)</p>
+            </div>
+
+            <div className="space-y-4">
+              {signerAddresses.map((address, index) => (
+                <div key={index} className="flex items-center gap-3">
+                  <div className="flex-1">
+                    <Label htmlFor={`signer-${index}`} className="text-sm font-medium">
+                      Signer {index + 1} Wallet Address *
+                    </Label>
+                    <Input
+                      id={`signer-${index}`}
+                      value={address}
+                      onChange={(e) => handleSignerAddressChange(index, e.target.value)}
+                      placeholder="0x..."
+                      className={`font-mono ${errors.signerAddresses?.[index] ? "border-destructive" : ""}`}
+                    />
+                    {errors.signerAddresses?.[index] && (
+                      <p className="text-sm text-destructive mt-1">{errors.signerAddresses[index]?.message}</p>
+                    )}
+                  </div>
+                  {signerAddresses.length > 3 && (
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="icon"
+                      onClick={() => removeSignerAddress(index)}
+                      className="mt-6"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  )}
+                </div>
+              ))}
+
+              {signerAddresses.length < 20 && (
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={addSignerAddress}
+                  className="w-full gap-2 bg-transparent"
+                >
+                  <Plus className="h-4 w-4" />
+                  Add Another Signer
+                </Button>
+              )}
+            </div>
+
+            <div className="bg-primary/5 border border-primary/20 rounded-lg p-4">
+              <div className="flex items-center gap-2 text-primary mb-2">
+                <Shield className="h-5 w-5" />
+                <span className="font-medium">Signer Summary</span>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+                <div>
+                  <p className="text-muted-foreground">Total Signers</p>
+                  <p className="font-semibold text-lg">{totalSigners}</p>
+                </div>
+                <div>
+                  <p className="text-muted-foreground">Required Percentage</p>
+                  <p className="font-semibold text-lg">{signatoryPercentage}%</p>
+                </div>
+                <div>
+                  <p className="text-muted-foreground">Approvals Needed</p>
+                  <p className="font-semibold text-lg text-primary">{requiredApprovals}</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        )
+
+      case 3:
         return (
           <div className="space-y-6">
             <div className="text-center pb-6">
@@ -325,7 +401,7 @@ export default function NewPaymentPage() {
           </div>
         )
 
-      case 3:
+      case 4:
         return (
           <div className="space-y-6">
             <div className="text-center pb-6">
@@ -393,7 +469,7 @@ export default function NewPaymentPage() {
           </div>
         )
 
-      case 4:
+      case 5:
         return (
           <div className="space-y-6">
             <div className="text-center pb-6">
@@ -414,10 +490,6 @@ export default function NewPaymentPage() {
                   <p className="text-sm text-muted-foreground">Batch Name</p>
                   <p className="font-semibold">{watchedValues.batchName}</p>
                 </div>
-                <div>
-                  <p className="text-sm text-muted-foreground">Description</p>
-                  <p className="text-sm">{watchedValues.description}</p>
-                </div>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <div>
                     <p className="text-sm text-muted-foreground">Total Signers</p>
@@ -431,6 +503,27 @@ export default function NewPaymentPage() {
                     <p className="text-sm text-muted-foreground">Approvals Needed</p>
                     <p className="font-semibold text-primary">{requiredApprovals}</p>
                   </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-lg">Authorized Signers</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-2">
+                  {watchedValues.signerAddresses
+                    .filter((addr) => addr.trim() !== "")
+                    .map((address, index) => (
+                      <div
+                        key={index}
+                        className="flex items-center justify-between py-2 border-b border-border/50 last:border-0"
+                      >
+                        <span className="text-sm text-muted-foreground">Signer {index + 1}</span>
+                        <span className="font-mono text-sm">{address}</span>
+                      </div>
+                    ))}
                 </div>
               </CardContent>
             </Card>
@@ -535,14 +628,16 @@ export default function NewPaymentPage() {
         <div className="flex-1">
           <h1 className="text-3xl font-bold tracking-tight">Create Payment Batch</h1>
           <p className="text-muted-foreground">
-            Step {step} of 4:{" "}
+            Step {step} of 5:{" "}
             {step === 1
               ? "Batch Details"
               : step === 2
-                ? "Select Employees"
+                ? "Configure Signers"
                 : step === 3
-                  ? "Set Payment Amounts"
-                  : "Review & Confirm"}
+                  ? "Select Employees"
+                  : step === 4
+                    ? "Set Payment Amounts"
+                    : "Review & Confirm"}
           </p>
         </div>
       </div>
@@ -556,13 +651,13 @@ export default function NewPaymentPage() {
         <Progress value={progress} className="h-2" />
       </div>
 
-      {/* Step Indicators */}
-      <div className="flex items-center justify-center space-x-4">
+      <div className="flex items-center justify-center space-x-2">
         {[
           { number: 1, title: "Details", icon: FileText },
-          { number: 2, title: "Select", icon: Users },
-          { number: 3, title: "Amounts", icon: DollarSign },
-          { number: 4, title: "Review", icon: CheckCircle },
+          { number: 2, title: "Signers", icon: UserCheck },
+          { number: 3, title: "Select", icon: Users },
+          { number: 4, title: "Amounts", icon: DollarSign },
+          { number: 5, title: "Review", icon: CheckCircle },
         ].map((stepItem) => (
           <div key={stepItem.number} className="flex items-center">
             <div
@@ -586,10 +681,10 @@ export default function NewPaymentPage() {
                 {stepItem.title}
               </p>
             </div>
-            {stepItem.number < 4 && (
+            {stepItem.number < 5 && (
               <div
                 className={`
-                w-12 h-0.5 mx-2 transition-all
+                w-8 h-0.5 mx-1 transition-all
                 ${step > stepItem.number ? "bg-primary" : "bg-muted"}
               `}
               />
@@ -604,7 +699,6 @@ export default function NewPaymentPage() {
           <form onSubmit={handleSubmit(onSubmit)}>
             {renderStepContent()}
 
-            {/* Navigation */}
             <div className="flex justify-between pt-8 mt-8 border-t">
               <Button
                 type="button"
@@ -617,14 +711,15 @@ export default function NewPaymentPage() {
                 Previous
               </Button>
 
-              {step < 4 ? (
+              {step < 5 ? (
                 <Button
                   type="button"
                   onClick={() => setStep(step + 1)}
                   disabled={
                     (step === 1 && !canProceedToStep2) ||
                     (step === 2 && !canProceedToStep3) ||
-                    (step === 3 && !canProceedToStep4)
+                    (step === 3 && !canProceedToStep4) ||
+                    (step === 4 && !canProceedToStep5)
                   }
                   className="gap-2"
                 >
