@@ -18,7 +18,7 @@ contract DeployScript is Script {
     }
 }
 
-// forge script script/Deploy.s.sol --rpc-url $BASE_SEPOLIA_RPC_URL --broadcast --verify -vvvv 
+// forge script script/Deploy.s.sol --rpc-url $BASE_SEPOLIA_RPC_URL --broadcast --verify -vvvv
 
 // jq --version
 // brew install jq ===> if not installed
