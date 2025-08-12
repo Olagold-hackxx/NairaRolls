@@ -20,6 +20,17 @@ interface AppState {
   // UI State
   sidebarOpen: boolean;
 
+  // Payment Form State
+  paymentForm: {
+    currentStep: number
+    batchName: string
+    signerAddresses: string[]
+    signatoryPercentage: number
+    selectedEmployees: string[]
+    payments: Record<string, string>
+  }
+
+
   // Actions
   setUser: (user: User | null) => void;
   setOrganization: (org: Organization | null) => void;
@@ -35,6 +46,13 @@ interface AppState {
   removeNotification: (id: string) => void;
   setNotificationPreferences: (preferences: NotificationPreferences) => void;
   addEmployee: (employee: Employee) => void;
+   // Payment Form Actions
+  setPaymentFormStep: (step: number) => void
+  setPaymentFormData: (data: Partial<AppState["paymentForm"]>) => void
+  addSignerAddress: (address: string) => void
+  removeSignerAddress: (index: number) => void
+  updateSignerAddress: (index: number, address: string) => void
+  resetPaymentForm: () => void
 
   setRegistrationData: (data: RegistrationData) => void;
   clearRegistrationData: () => void;
@@ -93,6 +111,16 @@ export const useAppStore = create<AppState>()(
           createdBy: "0x1234567890123456789012345678901234567890",
         },
       ],
+       // Initial payment form state
+      paymentForm: {
+        currentStep: 1,
+        batchName: "",
+        signerAddresses: ["", "", ""], // Start with 3 empty addresses
+        signatoryPercentage: 60,
+        selectedEmployees: [],
+        payments: {},
+      },
+
 
       notifications: [
         {
@@ -121,6 +149,7 @@ export const useAppStore = create<AppState>()(
       sidebarOpen: true,
 
       // Actions
+      
       setUser: (user) => set({ user, isAuthenticated: !!user }),
       setOrganization: (organization) => set({ organization }),
       setEmployees: (employees) => set({ employees }),
@@ -175,6 +204,59 @@ export const useAppStore = create<AppState>()(
       setRegistrationData: (registrationData) => set({ registrationData }),
       clearRegistrationData: () => set({ registrationData: null }),
 
+        // Payment Form Actions
+      setPaymentFormStep: (step) => {
+        set((state) => ({
+          paymentForm: { ...state.paymentForm, currentStep: step },
+        }))
+      },
+
+      setPaymentFormData: (data) => {
+        set((state) => ({
+          paymentForm: { ...state.paymentForm, ...data },
+        }))
+      },
+
+      addSignerAddress: (address) => {
+        set((state) => ({
+          paymentForm: {
+            ...state.paymentForm,
+            signerAddresses: [...state.paymentForm.signerAddresses, address],
+          },
+        }))
+      },
+
+      removeSignerAddress: (index) => {
+        set((state) => ({
+          paymentForm: {
+            ...state.paymentForm,
+            signerAddresses: state.paymentForm.signerAddresses.filter((_, i) => i !== index),
+          },
+        }))
+      },
+
+      updateSignerAddress: (index, address) => {
+        set((state) => ({
+          paymentForm: {
+            ...state.paymentForm,
+            signerAddresses: state.paymentForm.signerAddresses.map((addr, i) => (i === index ? address : addr)),
+          },
+        }))
+      },
+
+      resetPaymentForm: () => {
+        set((state) => ({
+          paymentForm: {
+            currentStep: 1,
+            batchName: "",
+            signerAddresses: ["", "", ""],
+            signatoryPercentage: 60,
+            selectedEmployees: [],
+            payments: {},
+          },
+        }))
+      },
+
       logout: () =>
         set({
           user: null,
@@ -183,6 +265,14 @@ export const useAppStore = create<AppState>()(
           employees: [],
           paymentBatches: [],
           notifications: [],
+          paymentForm: {
+            currentStep: 1,
+            batchName: "",
+            signerAddresses: ["", "", ""],
+            signatoryPercentage: 60,
+            selectedEmployees: [],
+            payments: {},
+          },
           registrationData: null, // Clear registration data on logout
         }),
     }),
@@ -198,3 +288,4 @@ export const useAppStore = create<AppState>()(
     }
   )
 );
+
