@@ -279,7 +279,7 @@ export default function SettingsPage() {
             <CardContent className="space-y-4">
               <div className="flex items-center justify-between p-4 border rounded-lg">
                 <div>
-                  <p className="font-medium">Connected Wallet</p>
+                  <p className="font-medium">Organization Wallet</p>
                   <p className="text-sm text-muted-foreground font-mono">{account?.address || "No wallet connected"}</p>
                   <p className="text-xs text-muted-foreground mt-1">
                     This wallet is used for all organization transactions and multisig operations
