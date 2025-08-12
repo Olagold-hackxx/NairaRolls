@@ -20,8 +20,8 @@ import {
   Hash,
 } from "lucide-react"
 import { useAppStore } from "@/lib/store"
-import { useWeb3 } from "@/components/providers/web3-provider"
-import { useToast } from "@/hooks/use-toast"
+import { useAccount } from "@/lib/thirdweb-hooks";
+import { toast } from "sonner"
 
 interface RejectionDialogProps {
   batchId: string
@@ -376,8 +376,7 @@ function ViewDetailsDialog({ batch, isOpen, onOpenChange }: ViewDetailsDialogPro
 
 export default function ApprovalsPage() {
   const { paymentBatches, user } = useAppStore()
-  const { isConnected, account } = useWeb3()
-  const { toast } = useToast()
+  const { isConnected, account } = useAccount();
   const [rejectionDialogOpen, setRejectionDialogOpen] = useState(false)
   const [selectedBatchId, setSelectedBatchId] = useState<string>("")
   const [viewDetailsDialogOpen, setViewDetailsDialogOpen] = useState(false)
@@ -389,52 +388,44 @@ export default function ApprovalsPage() {
 
   const handleApprove = async (batchId: string) => {
     if (!isConnected || !account) {
-      toast({
-        title: "Wallet not connected",
-        description: "Please connect your wallet to approve batches",
-        variant: "destructive",
-      })
+      toast.error("Please connect your wallet first.");
       return
     }
 
-    try {
-      toast({
-        title: "Batch approved",
-        description: "Your approval has been recorded and other signers have been notified",
-      })
-    } catch (error) {
-      toast({
-        title: "Approval failed",
-        description: "Failed to approve batch. Please try again.",
-        variant: "destructive",
-      })
-    }
+    // try {
+    //   toast({
+    //     title: "Batch approved",
+    //     description: "Your approval has been recorded and other signers have been notified",
+    //   })
+    // } catch (error) {
+    //   toast({
+    //     title: "Approval failed",
+    //     description: "Failed to approve batch. Please try again.",
+    //     variant: "destructive",
+    //   })
+    // }
   }
 
   const handleReject = async (batchId: string, reason: string) => {
     if (!isConnected || !account) {
-      toast({
-        title: "Wallet not connected",
-        description: "Please connect your wallet to reject batches",
-        variant: "destructive",
-      })
+      toast.error("Please connect your wallet first.");
       return
     }
 
-    try {
-      // Here you would call your smart contract to reject the batch with reason
-      // Also notify all signers about the rejection
-      toast({
-        title: "Batch rejected",
-        description: "The payment batch has been rejected and all signers have been notified",
-      })
-    } catch (error) {
-      toast({
-        title: "Rejection failed",
-        description: "Failed to reject batch. Please try again.",
-        variant: "destructive",
-      })
-    }
+    // try {
+    //   // Here you would call your smart contract to reject the batch with reason
+    //   // Also notify all signers about the rejection
+    //   toast({
+    //     title: "Batch rejected",
+    //     description: "The payment batch has been rejected and all signers have been notified",
+    //   })
+    // } catch (error) {
+    //   toast({
+    //     title: "Rejection failed",
+    //     description: "Failed to reject batch. Please try again.",
+    //     variant: "destructive",
+    //   })
+    // }
   }
 
   const openRejectionDialog = (batchId: string) => {
@@ -567,7 +558,7 @@ export default function ApprovalsPage() {
                       </div>
                     ) : (
                       <Badge variant="secondary">
-                        {batch.approvals.includes(account || "") ? "Already Approved" : "Cannot Approve"}
+                        {batch.approvals.includes(account?.address || "") ? "Already Approved" : "Cannot Approve"}
                       </Badge>
                     )}
                   </div>

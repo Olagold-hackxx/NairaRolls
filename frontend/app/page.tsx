@@ -11,7 +11,7 @@ import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
-import { useWeb3 } from "@/components/providers/web3-provider"
+import { useAccount } from "@/lib/thirdweb-hooks";
 import { useRouter } from "next/navigation"
 import {
   Building2,
@@ -34,6 +34,9 @@ import {
   FileText,
   Award,
 } from "lucide-react"
+import ConnectWallet from "@/components/ConnectWallet"
+import { useDisconnect, useActiveWallet } from "thirdweb/react";
+import { toast } from "sonner"
 
 function OrganizationRegistrationForm({ onComplete }: { onComplete: () => void }) {
   const [formData, setFormData] = useState({
@@ -154,10 +157,12 @@ function OrganizationRegistrationForm({ onComplete }: { onComplete: () => void }
 }
 
 export default function LandingPage() {
-  const { isConnected, account, connect } = useWeb3()
+  const { isConnected, account } = useAccount();
   const router = useRouter()
   const [isRegistered, setIsRegistered] = useState(false)
   const [showRegistration, setShowRegistration] = useState(false)
+  const wallet = useActiveWallet();
+  const { disconnect } = useDisconnect();
 
   useEffect(() => {
     if (account) {
@@ -168,19 +173,15 @@ export default function LandingPage() {
     }
   }, [account])
 
-  const handleMainCTA = async () => {
-    if (!isConnected) {
-      try {
-        await connect()
-      } catch (error) {
-        console.error("Failed to connect wallet:", error)
-      }
-    } else if (isRegistered) {
-      router.push("/dashboard")
-    } else {
-      setShowRegistration(true)
-    }
-  }
+  // const handleMainCTA = async () => {
+  //   if (!isConnected) {
+  //     toast.warning("Please connect your wallet first.");
+  //   } else if (isRegistered) {
+  //     router.push("/dashboard")
+  //   } else {
+  //     setShowRegistration(true)
+  //   }
+  // }
 
   const handleRegistrationComplete = () => {
     if (account) {
@@ -191,17 +192,17 @@ export default function LandingPage() {
     }
   }
 
-  const getCTAText = () => {
-    if (!isConnected) return "Connect Wallet"
-    if (!isRegistered) return "Complete Setup"
-    return "Go to Dashboard"
-  }
+  // const getCTAText = () => {
+  //   if (!isConnected) return "Connect Wallet"
+  //   if (!isRegistered) return "Complete Setup"
+  //   return "Go to Dashboard"
+  // }
 
-  const getCTAIcon = () => {
-    if (!isConnected) return <Wallet className="w-4 h-4" />
-    if (!isRegistered) return <UserPlus className="w-4 h-4" />
-    return <ArrowRight className="w-4 h-4" />
-  }
+  // const getCTAIcon = () => {
+  //   if (!isConnected) return <ConnectWallet />
+  //   if (!isRegistered) return <UserPlus className="w-4 h-4" />
+  //   return <ArrowRight className="w-4 h-4" />
+  // }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
@@ -235,21 +236,37 @@ export default function LandingPage() {
               >
                 Security
               </Link>
-              <Link href="#pricing" className="text-sm font-medium text-slate-300 hover:text-primary transition-colors">
+              <Link
+                href="#pricing"
+                className="text-sm font-medium text-slate-300 hover:text-primary transition-colors"
+              >
                 Pricing
               </Link>
             </div>
             <div className="flex items-center gap-3">
-              {isConnected && (
-                <div className="hidden md:flex items-center gap-2 text-sm text-slate-300">
-                  <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                  {account?.slice(0, 6)}...{account?.slice(-4)}
+              {isConnected ? (
+                <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-2 text-sm text-slate-300">
+                    <Wallet className="h-4 w-4" />
+                    <span className="truncate">
+                      {account?.address.slice(0, 6)}...
+                      {account?.address.slice(-4)}
+                    </span>
+                  </div>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="w-full border-slate-700 text-slate-300 hover:bg-slate-800 hover:text-white"
+                    onClick={() => wallet && disconnect(wallet)}
+                  >
+                    Disconnect
+                  </Button>
+                </div>
+              ) : (
+                <div className="flex justify-center">
+                  <ConnectWallet />
                 </div>
               )}
-              <Button onClick={handleMainCTA} className="bg-primary hover:bg-primary/90 text-primary-foreground">
-                {getCTAIcon()}
-                {getCTAText()}
-              </Button>
             </div>
           </div>
         </div>
@@ -260,15 +277,18 @@ export default function LandingPage() {
           <DialogHeader>
             <DialogTitle>Complete Your Organization Setup</DialogTitle>
             <DialogDescription>
-              Please provide your organization details to get started. Make sure to use your organization wallet for all
-              transactions.
+              Please provide your organization details to get started. Make sure
+              to use your organization wallet for all transactions.
             </DialogDescription>
           </DialogHeader>
-          <OrganizationRegistrationForm onComplete={handleRegistrationComplete} />
+          <OrganizationRegistrationForm
+            onComplete={handleRegistrationComplete}
+          />
           <div className="mt-4 p-4 bg-blue-50 dark:bg-blue-950 rounded-lg">
             <p className="text-sm text-blue-800 dark:text-blue-200">
-              <strong>Important:</strong> Please ensure you're using your organization's designated wallet address. This
-              wallet will be used for all payroll transactions and multisig operations.
+              <strong>Important:</strong> Please ensure you're using your
+              organization's designated wallet address. This wallet will be used
+              for all payroll transactions and multisig operations.
             </p>
           </div>
         </DialogContent>
@@ -321,15 +341,74 @@ export default function LandingPage() {
               <div className="absolute bottom-0 left-1/2 w-2 h-2 bg-emerald-200 rounded-full" />
 
               {/* Connection Lines */}
-              <svg className="absolute inset-0 w-full h-full" viewBox="0 0 384 384">
-                <line x1="192" y1="192" x2="96" y2="96" stroke="rgb(16 185 129 / 0.2)" strokeWidth="1" />
-                <line x1="192" y1="192" x2="288" y2="96" stroke="rgb(16 185 129 / 0.2)" strokeWidth="1" />
-                <line x1="192" y1="192" x2="96" y2="288" stroke="rgb(16 185 129 / 0.2)" strokeWidth="1" />
-                <line x1="192" y1="192" x2="288" y2="288" stroke="rgb(16 185 129 / 0.2)" strokeWidth="1" />
-                <line x1="192" y1="192" x2="0" y2="192" stroke="rgb(16 185 129 / 0.2)" strokeWidth="1" />
-                <line x1="192" y1="192" x2="384" y2="192" stroke="rgb(16 185 129 / 0.2)" strokeWidth="1" />
-                <line x1="192" y1="192" x2="192" y2="0" stroke="rgb(16 185 129 / 0.2)" strokeWidth="1" />
-                <line x1="192" y1="192" x2="192" y2="384" stroke="rgb(16 185 129 / 0.2)" strokeWidth="1" />
+              <svg
+                className="absolute inset-0 w-full h-full"
+                viewBox="0 0 384 384"
+              >
+                <line
+                  x1="192"
+                  y1="192"
+                  x2="96"
+                  y2="96"
+                  stroke="rgb(16 185 129 / 0.2)"
+                  strokeWidth="1"
+                />
+                <line
+                  x1="192"
+                  y1="192"
+                  x2="288"
+                  y2="96"
+                  stroke="rgb(16 185 129 / 0.2)"
+                  strokeWidth="1"
+                />
+                <line
+                  x1="192"
+                  y1="192"
+                  x2="96"
+                  y2="288"
+                  stroke="rgb(16 185 129 / 0.2)"
+                  strokeWidth="1"
+                />
+                <line
+                  x1="192"
+                  y1="192"
+                  x2="288"
+                  y2="288"
+                  stroke="rgb(16 185 129 / 0.2)"
+                  strokeWidth="1"
+                />
+                <line
+                  x1="192"
+                  y1="192"
+                  x2="0"
+                  y2="192"
+                  stroke="rgb(16 185 129 / 0.2)"
+                  strokeWidth="1"
+                />
+                <line
+                  x1="192"
+                  y1="192"
+                  x2="384"
+                  y2="192"
+                  stroke="rgb(16 185 129 / 0.2)"
+                  strokeWidth="1"
+                />
+                <line
+                  x1="192"
+                  y1="192"
+                  x2="192"
+                  y2="0"
+                  stroke="rgb(16 185 129 / 0.2)"
+                  strokeWidth="1"
+                />
+                <line
+                  x1="192"
+                  y1="192"
+                  x2="192"
+                  y2="384"
+                  stroke="rgb(16 185 129 / 0.2)"
+                  strokeWidth="1"
+                />
               </svg>
             </div>
           </div>
@@ -360,12 +439,16 @@ export default function LandingPage() {
               <span className="text-primary block">Powered by Web3</span>
             </h1>
             <p className="text-xl text-slate-700 dark:text-slate-300 mb-8 max-w-3xl mx-auto leading-relaxed">
-              Secure, compliant, and transparent payroll management using MPC wallet technology and cNGN stablecoin.
-              Process bulk payments with multi-signer approvals in seconds, not days.
+              Secure, compliant, and transparent payroll management using MPC
+              wallet technology and cNGN stablecoin. Process bulk payments with
+              multi-signer approvals in seconds, not days.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center mb-12">
               <Link href="/auth/register">
-                <Button size="lg" className="text-lg px-8 py-6 shadow-lg hover:shadow-xl transition-shadow">
+                <Button
+                  size="lg"
+                  className="text-lg px-8 py-6 shadow-lg hover:shadow-xl transition-shadow"
+                >
                   Start Free Trial
                   <ArrowRight className="ml-2 h-5 w-5" />
                 </Button>
@@ -388,7 +471,9 @@ export default function LandingPage() {
                   key={index}
                   className="text-center bg-white/80 backdrop-blur-sm rounded-lg p-4 border border-white/30 shadow-sm"
                 >
-                  <div className="text-2xl md:text-3xl font-bold text-primary">{stat.value}</div>
+                  <div className="text-2xl md:text-3xl font-bold text-primary">
+                    {stat.value}
+                  </div>
                   <div className="text-sm text-slate-600">{stat.label}</div>
                 </div>
               ))}
@@ -398,7 +483,10 @@ export default function LandingPage() {
       </section>
 
       {/* Features Section */}
-      <section id="features" className="py-20 bg-white dark:bg-slate-900 relative overflow-hidden">
+      <section
+        id="features"
+        className="py-20 bg-white dark:bg-slate-900 relative overflow-hidden"
+      >
         {/* Subtle Background Pattern */}
         <div className="absolute inset-0 opacity-5">
           <div
@@ -422,7 +510,8 @@ export default function LandingPage() {
               Built for Enterprise Security & Compliance
             </h2>
             <p className="text-xl text-slate-600 dark:text-slate-400 max-w-2xl mx-auto">
-              Every feature designed with security, compliance, and user experience in mind
+              Every feature designed with security, compliance, and user
+              experience in mind
             </p>
           </div>
 
@@ -438,16 +527,22 @@ export default function LandingPage() {
                       <div className="w-12 h-12 bg-emerald-100 dark:bg-emerald-900/30 rounded-xl flex items-center justify-center mb-6">
                         <feature.icon className="h-6 w-6 text-emerald-600" />
                       </div>
-                      <Badge variant="secondary" className="mb-4 text-xs bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300">
+                      <Badge
+                        variant="secondary"
+                        className="mb-4 text-xs bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300"
+                      >
                         {feature.highlight}
                       </Badge>
-                      <h3 className="text-xl font-semibold mb-4 text-slate-900 dark:text-white">{feature.title}</h3>
-                      <p className="text-slate-600 dark:text-slate-400 leading-relaxed">{feature.description}</p>
+                      <h3 className="text-xl font-semibold mb-4 text-slate-900 dark:text-white">
+                        {feature.title}
+                      </h3>
+                      <p className="text-slate-600 dark:text-slate-400 leading-relaxed">
+                        {feature.description}
+                      </p>
                     </div>
                   </div>
                 </div>
               ))}
-
             </div>
 
             {/* Second Row - 1 feature centered */}
@@ -457,7 +552,9 @@ export default function LandingPage() {
                   <div className="absolute -top-4 -right-4 w-24 h-24 bg-gradient-to-br from-emerald-100 to-teal-100 dark:from-emerald-900/30 dark:to-teal-900/30 rounded-full group-hover:scale-125 transition-transform duration-500" />
                   <div className="relative z-10 text-center">
                     <div className="w-16 h-16 bg-emerald-100 dark:bg-emerald-900/30 rounded-2xl flex items-center justify-center mb-4 mx-auto">
-                      {React.createElement(features[2].icon, { className: "h-8 w-8 text-emerald-600" })}
+                      {React.createElement(features[2].icon, {
+                        className: "h-8 w-8 text-emerald-600",
+                      })}
                     </div>
                     <Badge
                       variant="secondary"
@@ -465,7 +562,9 @@ export default function LandingPage() {
                     >
                       {features[2].highlight}
                     </Badge>
-                    <h3 className="text-2xl font-semibold mb-4 text-slate-900 dark:text-white">{features[2].title}</h3>
+                    <h3 className="text-2xl font-semibold mb-4 text-slate-900 dark:text-white">
+                      {features[2].title}
+                    </h3>
                     <p className="text-slate-600 dark:text-slate-400 leading-relaxed text-lg">
                       {features[2].description}
                     </p>
@@ -488,8 +587,12 @@ export default function LandingPage() {
                     >
                       {feature.highlight}
                     </Badge>
-                    <h3 className="text-lg font-semibold mb-3 text-slate-900 dark:text-white">{feature.title}</h3>
-                    <p className="text-slate-600 dark:text-slate-400 text-sm leading-relaxed">{feature.description}</p>
+                    <h3 className="text-lg font-semibold mb-3 text-slate-900 dark:text-white">
+                      {feature.title}
+                    </h3>
+                    <p className="text-slate-600 dark:text-slate-400 text-sm leading-relaxed">
+                      {feature.description}
+                    </p>
                   </div>
                 </div>
               ))}
@@ -526,8 +629,12 @@ export default function LandingPage() {
                     <div className="w-16 h-16 bg-emerald-100 dark:bg-emerald-900/30 rounded-2xl flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform duration-300">
                       <benefit.icon className="h-8 w-8 text-emerald-600" />
                     </div>
-                    <h3 className="text-lg font-semibold mb-2 text-slate-900 dark:text-white">{benefit.title}</h3>
-                    <p className="text-slate-600 dark:text-slate-400 mb-4 text-sm">{benefit.description}</p>
+                    <h3 className="text-lg font-semibold mb-2 text-slate-900 dark:text-white">
+                      {benefit.title}
+                    </h3>
+                    <p className="text-slate-600 dark:text-slate-400 mb-4 text-sm">
+                      {benefit.description}
+                    </p>
                     <Badge className="bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400 border-emerald-200 dark:border-emerald-700">
                       {benefit.metric}
                     </Badge>
@@ -553,7 +660,8 @@ export default function LandingPage() {
               Trusted by Organizations Across Nigeria
             </h2>
             <p className="text-xl text-slate-600 dark:text-slate-400 max-w-2xl mx-auto">
-              From startups to government agencies, see how different organizations use NairaRolls
+              From startups to government agencies, see how different
+              organizations use NairaRolls
             </p>
           </div>
 
@@ -561,19 +669,26 @@ export default function LandingPage() {
             {useCases.map((useCase, index) => (
               <Card
                 key={index}
-                className="p-8 hover:shadow-lg transition-shadow border-slate-200  dark:bg-gradient-to-br dark:from-gray-950 dark:via-slate-900 dark:to-gray-950 border-slate-200 dark:border-slate-700">
+                className="p-8 hover:shadow-lg transition-shadow  dark:bg-gradient-to-br dark:from-gray-950 dark:via-slate-900 dark:to-gray-950 border-slate-200 dark:border-slate-700"
+              >
                 <div className="flex items-start gap-4 mb-6">
                   <useCase.icon className="h-12 w-12 text-primary flex-shrink-0" />
                   <div>
-                    <h3 className="text-xl font-semibold mb-2 text-slate-900 dark:text-white">{useCase.title}</h3>
-                    <p className="text-slate-600 dark:text-slate-400">{useCase.description}</p>
+                    <h3 className="text-xl font-semibold mb-2 text-slate-900 dark:text-white">
+                      {useCase.title}
+                    </h3>
+                    <p className="text-slate-600 dark:text-slate-400">
+                      {useCase.description}
+                    </p>
                   </div>
                 </div>
                 <div className="space-y-2">
                   {useCase.features.map((feature, idx) => (
                     <div key={idx} className="flex items-center gap-2">
                       <CheckCircle className="h-4 w-4 text-green-500" />
-                      <span className="text-sm text-slate-700 dark:text-slate-300">{feature}</span>
+                      <span className="text-sm text-slate-700 dark:text-slate-300">
+                        {feature}
+                      </span>
                     </div>
                   ))}
                 </div>
@@ -605,21 +720,29 @@ export default function LandingPage() {
             <div className="grid md:grid-cols-3 gap-8 mb-12">
               <Card className="p-6 text-center border-slate-200 dark:border-slate-700">
                 <Shield className="h-12 w-12 text-primary mx-auto mb-4" />
-                <h3 className="font-semibold mb-2 text-slate-900 dark:text-white">MPC Wallet Technology</h3>
+                <h3 className="font-semibold mb-2 text-slate-900 dark:text-white">
+                  MPC Wallet Technology
+                </h3>
                 <p className="text-sm text-slate-600 dark:text-slate-400">
-                  No single private key exists. Funds secured through distributed key shares.
+                  No single private key exists. Funds secured through
+                  distributed key shares.
                 </p>
               </Card>
               <Card className="p-6 text-center border-slate-200 dark:border-slate-700">
                 <Lock className="h-12 w-12 text-primary mx-auto mb-4" />
-                <h3 className="font-semibold mb-2 text-slate-900 dark:text-white">Multi-Signer Approvals</h3>
+                <h3 className="font-semibold mb-2 text-slate-900 dark:text-white">
+                  Multi-Signer Approvals
+                </h3>
                 <p className="text-sm text-slate-600 dark:text-slate-400">
-                  Customizable approval thresholds prevent unauthorized transactions.
+                  Customizable approval thresholds prevent unauthorized
+                  transactions.
                 </p>
               </Card>
               <Card className="p-6 text-center border-slate-200 dark:border-slate-700">
                 <Eye className="h-12 w-12 text-primary mx-auto mb-4" />
-                <h3 className="font-semibold mb-2 text-slate-900 dark:text-white">Complete Transparency</h3>
+                <h3 className="font-semibold mb-2 text-slate-900 dark:text-white">
+                  Complete Transparency
+                </h3>
                 <p className="text-sm text-slate-600 dark:text-slate-400">
                   Every transaction recorded on-chain with full audit trails.
                 </p>
@@ -628,9 +751,12 @@ export default function LandingPage() {
 
             <Card className="p-8 bg-primary text-primary-foreground">
               <div className="text-center">
-                <h3 className="text-2xl font-bold mb-4">Zero Security Incidents Since Launch</h3>
+                <h3 className="text-2xl font-bold mb-4">
+                  Zero Security Incidents Since Launch
+                </h3>
                 <p className="text-primary-foreground/80 mb-6">
-                  Our MPC architecture ensures your funds are always secure, with no single point of failure.
+                  Our MPC architecture ensures your funds are always secure,
+                  with no single point of failure.
                 </p>
                 <Button variant="secondary">Learn About Our Security</Button>
               </div>
@@ -647,22 +773,35 @@ export default function LandingPage() {
               Trusted by Finance Leaders
             </h2>
             <p className="text-xl text-slate-600 dark:text-slate-400">
-              See what our customers say about transforming their payroll operations
+              See what our customers say about transforming their payroll
+              operations
             </p>
           </div>
 
           <div className="grid md:grid-cols-3 gap-8">
             {testimonials.map((testimonial, index) => (
-              <Card key={index} className="p-6 border-slate-200 dark:border-slate-700">
+              <Card
+                key={index}
+                className="p-6 border-slate-200 dark:border-slate-700"
+              >
                 <div className="flex mb-4">
                   {[...Array(testimonial.rating)].map((_, i) => (
-                    <Star key={i} className="h-4 w-4 fill-yellow-400 text-yellow-400" />
+                    <Star
+                      key={i}
+                      className="h-4 w-4 fill-yellow-400 text-yellow-400"
+                    />
                   ))}
                 </div>
-                <p className="text-slate-600 dark:text-slate-400 mb-4 italic">"{testimonial.content}"</p>
+                <p className="text-slate-600 dark:text-slate-400 mb-4 italic">
+                  "{testimonial.content}"
+                </p>
                 <div>
-                  <p className="font-semibold text-slate-900 dark:text-white">{testimonial.name}</p>
-                  <p className="text-sm text-slate-500 dark:text-slate-500">{testimonial.role}</p>
+                  <p className="font-semibold text-slate-900 dark:text-white">
+                    {testimonial.name}
+                  </p>
+                  <p className="text-sm text-slate-500 dark:text-slate-500">
+                    {testimonial.role}
+                  </p>
                 </div>
               </Card>
             ))}
@@ -673,14 +812,20 @@ export default function LandingPage() {
       {/* CTA Section */}
       <section className="py-20 bg-gradient-to-r from-primary to-primary/80 text-primary-foreground">
         <div className="container mx-auto px-4 text-center">
-          <h2 className="text-3xl md:text-4xl font-bold mb-4">Ready to Transform Your Payroll?</h2>
+          <h2 className="text-3xl md:text-4xl font-bold mb-4">
+            Ready to Transform Your Payroll?
+          </h2>
           <p className="text-xl text-primary-foreground/80 mb-8 max-w-2xl mx-auto">
-            Join hundreds of organizations already using NairaRolls for secure, compliant, and efficient payroll
-            management.
+            Join hundreds of organizations already using NairaRolls for secure,
+            compliant, and efficient payroll management.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Link href="/auth/register">
-              <Button size="lg" variant="secondary" className="text-lg px-8 py-6">
+              <Button
+                size="lg"
+                variant="secondary"
+                className="text-lg px-8 py-6"
+              >
                 Start Free Trial
                 <ArrowRight className="ml-2 h-5 w-5" />
               </Button>
@@ -695,7 +840,9 @@ export default function LandingPage() {
               </Button>
             </Link>
           </div>
-          <p className="text-sm text-primary-foreground/60 mt-6">No setup fees • 30-day free trial • Cancel anytime</p>
+          <p className="text-sm text-primary-foreground/60 mt-6">
+            No setup fees • 30-day free trial • Cancel anytime
+          </p>
         </div>
       </section>
 
@@ -709,13 +856,20 @@ export default function LandingPage() {
                 <span className="text-lg font-bold text-white">NairaRolls</span>
               </div>
               <p className="text-sm text-gray-400 mb-4">
-                Enterprise payroll management powered by Web3 technology and cNGN stablecoin.
+                Enterprise payroll management powered by Web3 technology and
+                cNGN stablecoin.
               </p>
               <div className="flex gap-4">
-                <Badge variant="outline" className="border-gray-600 text-gray-400">
+                <Badge
+                  variant="outline"
+                  className="border-gray-600 text-gray-400"
+                >
                   SOC 2 Compliant
                 </Badge>
-                <Badge variant="outline" className="border-gray-600 text-gray-400">
+                <Badge
+                  variant="outline"
+                  className="border-gray-600 text-gray-400"
+                >
                   ISO 27001
                 </Badge>
               </div>
@@ -725,22 +879,34 @@ export default function LandingPage() {
               <h4 className="font-semibold text-white mb-4">Product</h4>
               <ul className="space-y-2 text-sm">
                 <li>
-                  <Link href="#features" className="hover:text-primary transition-colors">
+                  <Link
+                    href="#features"
+                    className="hover:text-primary transition-colors"
+                  >
                     Features
                   </Link>
                 </li>
                 <li>
-                  <Link href="#security" className="hover:text-primary transition-colors">
+                  <Link
+                    href="#security"
+                    className="hover:text-primary transition-colors"
+                  >
                     Security
                   </Link>
                 </li>
                 <li>
-                  <Link href="#pricing" className="hover:text-primary transition-colors">
+                  <Link
+                    href="#pricing"
+                    className="hover:text-primary transition-colors"
+                  >
                     Pricing
                   </Link>
                 </li>
                 <li>
-                  <Link href="/api" className="hover:text-primary transition-colors">
+                  <Link
+                    href="/api"
+                    className="hover:text-primary transition-colors"
+                  >
                     API Docs
                   </Link>
                 </li>
@@ -751,22 +917,34 @@ export default function LandingPage() {
               <h4 className="font-semibold text-white mb-4">Company</h4>
               <ul className="space-y-2 text-sm">
                 <li>
-                  <Link href="/about" className="hover:text-primary transition-colors">
+                  <Link
+                    href="/about"
+                    className="hover:text-primary transition-colors"
+                  >
                     About Us
                   </Link>
                 </li>
                 <li>
-                  <Link href="/careers" className="hover:text-primary transition-colors">
+                  <Link
+                    href="/careers"
+                    className="hover:text-primary transition-colors"
+                  >
                     Careers
                   </Link>
                 </li>
                 <li>
-                  <Link href="/blog" className="hover:text-primary transition-colors">
+                  <Link
+                    href="/blog"
+                    className="hover:text-primary transition-colors"
+                  >
                     Blog
                   </Link>
                 </li>
                 <li>
-                  <Link href="/contact" className="hover:text-primary transition-colors">
+                  <Link
+                    href="/contact"
+                    className="hover:text-primary transition-colors"
+                  >
                     Contact
                   </Link>
                 </li>
@@ -777,22 +955,34 @@ export default function LandingPage() {
               <h4 className="font-semibold text-white mb-4">Support</h4>
               <ul className="space-y-2 text-sm">
                 <li>
-                  <Link href="/help" className="hover:text-primary transition-colors">
+                  <Link
+                    href="/help"
+                    className="hover:text-primary transition-colors"
+                  >
                     Help Center
                   </Link>
                 </li>
                 <li>
-                  <Link href="/docs" className="hover:text-primary transition-colors">
+                  <Link
+                    href="/docs"
+                    className="hover:text-primary transition-colors"
+                  >
                     Documentation
                   </Link>
                 </li>
                 <li>
-                  <Link href="/status" className="hover:text-primary transition-colors">
+                  <Link
+                    href="/status"
+                    className="hover:text-primary transition-colors"
+                  >
                     System Status
                   </Link>
                 </li>
                 <li>
-                  <Link href="/privacy" className="hover:text-primary transition-colors">
+                  <Link
+                    href="/privacy"
+                    className="hover:text-primary transition-colors"
+                  >
                     Privacy Policy
                   </Link>
                 </li>
@@ -801,16 +991,27 @@ export default function LandingPage() {
           </div>
 
           <div className="border-t border-gray-800 pt-8 flex flex-col md:flex-row justify-between items-center">
-            <p className="text-sm text-gray-400">© 2024 NairaRolls. All rights reserved.</p>
+            <p className="text-sm text-gray-400">
+              © 2024 NairaRolls. All rights reserved.
+            </p>
             <div className="flex items-center gap-4 mt-4 md:mt-0">
               <span className="text-sm text-gray-400">Powered by</span>
-              <Badge variant="outline" className="border-gray-600 text-gray-400">
+              <Badge
+                variant="outline"
+                className="border-gray-600 text-gray-400"
+              >
                 cNGN
               </Badge>
-              <Badge variant="outline" className="border-gray-600 text-gray-400">
+              <Badge
+                variant="outline"
+                className="border-gray-600 text-gray-400"
+              >
                 Base
               </Badge>
-              <Badge variant="outline" className="border-gray-600 text-gray-400">
+              <Badge
+                variant="outline"
+                className="border-gray-600 text-gray-400"
+              >
                 Polygon
               </Badge>
             </div>
@@ -818,7 +1019,7 @@ export default function LandingPage() {
         </div>
       </footer>
     </div>
-  )
+  );
 }
 
 const features = [

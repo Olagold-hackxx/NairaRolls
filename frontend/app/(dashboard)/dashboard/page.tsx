@@ -5,12 +5,12 @@ import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { DollarSign, Users, Clock, TrendingUp, Plus, Upload, CheckCircle } from 'lucide-react'
 import { useAppStore } from '@/lib/store'
-import { useWeb3 } from '@/components/providers/web3-provider'
+import { useAccount } from "@/lib/thirdweb-hooks";
 import Link from 'next/link'
 
 export default function DashboardPage() {
   const { organization, employees, paymentBatches } = useAppStore()
-  const { isConnected } = useWeb3()
+  const { isConnected } = useAccount();
 
   const stats = [
     {

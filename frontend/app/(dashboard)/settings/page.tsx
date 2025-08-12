@@ -41,8 +41,8 @@ import {
   Info,
 } from "lucide-react"
 import { useAppStore } from "@/lib/store"
-import { useWeb3 } from "@/components/providers/web3-provider"
-import { useToast } from "@/hooks/use-toast"
+import { useAccount } from "@/lib/thirdweb-hooks";
+import { toast } from "sonner"
 
 const organizationSchema = z.object({
   name: z.string().min(2, "Organization name must be at least 2 characters"),
@@ -62,8 +62,7 @@ type MultisigFormData = z.infer<typeof multisigSchema>
 
 export default function SettingsPage() {
   const { organization, user, setOrganization } = useAppStore()
-  const { account, isConnected } = useWeb3()
-  const { toast } = useToast()
+  const { account, isConnected } = useAccount();
 
   const [isLoading, setIsLoading] = useState(false)
   const [copiedAddress, setCopiedAddress] = useState<string | null>(null)
@@ -100,16 +99,9 @@ export default function SettingsPage() {
       await navigator.clipboard.writeText(text)
       setCopiedAddress(type)
       setTimeout(() => setCopiedAddress(null), 2000)
-      toast({
-        title: "Copied to clipboard",
-        description: `${type} address copied successfully`,
-      })
+      toast.info(`${type} address copied successfully`);
     } catch (error) {
-      toast({
-        title: "Failed to copy",
-        description: "Could not copy to clipboard",
-        variant: "destructive",
-      })
+      toast.error("Failed to copy address to clipboard")
     }
   }
 
@@ -130,16 +122,9 @@ export default function SettingsPage() {
         })
       }
 
-      toast({
-        title: "Settings updated",
-        description: "Organization settings have been saved successfully",
-      })
+      toast.info("Organization settings updated successfully");
     } catch (error) {
-      toast({
-        title: "Update failed",
-        description: "Failed to update organization settings",
-        variant: "destructive",
-      })
+      toast.error("Failed to update organization settings")
     } finally {
       setIsLoading(false)
     }
@@ -150,21 +135,14 @@ export default function SettingsPage() {
 
     const currentSigners = multisigForm.getValues("signers")
     if (currentSigners.includes(newSignerAddress)) {
-      toast({
-        title: "Signer already exists",
-        description: "This address is already a signer",
-        variant: "destructive",
-      })
+      toast.error("Signer already exists in the list")
       return
     }
 
     multisigForm.setValue("signers", [...currentSigners, newSignerAddress])
     setNewSignerAddress("")
 
-    toast({
-      title: "Signer added",
-      description: "New signer has been added to the multisig wallet",
-    })
+    toast.info("Signer added successfully");
   }
 
   const removeSigner = (address: string) => {
@@ -172,10 +150,7 @@ export default function SettingsPage() {
     const updatedSigners = currentSigners.filter((signer) => signer !== address)
     multisigForm.setValue("signers", updatedSigners)
 
-    toast({
-      title: "Signer removed",
-      description: "Signer has been removed from the multisig wallet",
-    })
+    toast.info("Signer removed successfully");
   }
 
   const updateMultisig = async (data: MultisigFormData) => {
@@ -192,16 +167,9 @@ export default function SettingsPage() {
         })
       }
 
-      toast({
-        title: "Multisig updated",
-        description: "Multisig configuration has been updated on-chain",
-      })
+      toast.info("Multisig configuration updated successfully");
     } catch (error) {
-      toast({
-        title: "Update failed",
-        description: "Failed to update multisig configuration",
-        variant: "destructive",
-      })
+      toast.error("Failed to update multisig configuration")
     } finally {
       setIsLoading(false)
     }
@@ -312,7 +280,7 @@ export default function SettingsPage() {
               <div className="flex items-center justify-between p-4 border rounded-lg">
                 <div>
                   <p className="font-medium">Connected Wallet</p>
-                  <p className="text-sm text-muted-foreground font-mono">{account || "No wallet connected"}</p>
+                  <p className="text-sm text-muted-foreground font-mono">{account?.address || "No wallet connected"}</p>
                   <p className="text-xs text-muted-foreground mt-1">
                     This wallet is used for all organization transactions and multisig operations
                   </p>
@@ -322,7 +290,7 @@ export default function SettingsPage() {
                     {isConnected ? "Connected" : "Disconnected"}
                   </Badge>
                   {account && (
-                    <Button variant="outline" size="sm" onClick={() => copyToClipboard(account, "Connected wallet")}>
+                    <Button variant="outline" size="sm" onClick={() => copyToClipboard(account?.address, "Connected wallet")}>
                       {copiedAddress === "Connected wallet" ? (
                         <Check className="h-4 w-4" />
                       ) : (
@@ -394,7 +362,7 @@ export default function SettingsPage() {
                           <span className="font-mono text-sm">
                             {signer.slice(0, 6)}...{signer.slice(-4)}
                           </span>
-                          {signer === account && (
+                          {signer === account?.address && (
                             <Badge variant="secondary" className="text-xs">
                               You
                             </Badge>

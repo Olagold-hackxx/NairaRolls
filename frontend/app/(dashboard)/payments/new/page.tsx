@@ -29,9 +29,9 @@ import {
   Settings,
 } from "lucide-react"
 import { useAppStore } from "@/lib/store"
-import { useWeb3 } from "@/components/providers/web3-provider"
-import { useToast } from "@/hooks/use-toast"
+import { useAccount } from "@/lib/thirdweb-hooks";
 import Link from "next/link"
+import { toast } from "sonner"
 
 const paymentSchema = z.object({
   batchName: z.string().min(1, "Batch name is required").max(100, "Batch name too long"),
@@ -51,8 +51,7 @@ export default function NewPaymentPage() {
   const [isSubmitting, setIsSubmitting] = useState(false)
 
   const { employees, organization } = useAppStore()
-  const { isConnected } = useWeb3()
-  const { toast } = useToast()
+  const { isConnected } = useAccount();
 
   const {
     register,
@@ -120,35 +119,31 @@ export default function NewPaymentPage() {
 
   const onSubmit = async (data: PaymentFormData) => {
     if (!isConnected) {
-      toast({
-        title: "Wallet not connected",
-        description: "Please connect your wallet to create a payment batch",
-        variant: "destructive",
-      })
+      toast.warning("Please connect your wallet first.");
       return
     }
 
-    setIsSubmitting(true)
-    try {
-      // Simulate API call
-      await new Promise((resolve) => setTimeout(resolve, 2000))
+    // setIsSubmitting(true)
+    // try {
+    //   // Simulate API call
+    //   await new Promise((resolve) => setTimeout(resolve, 2000))
 
-      toast({
-        title: "Payment batch created successfully!",
-        description: `"${data.batchName}" has been submitted for approval`,
-      })
+    //   toast({
+    //     title: "Payment batch created successfully!",
+    //     description: `"${data.batchName}" has been submitted for approval`,
+    //   })
 
-      // Redirect to approvals page
-      window.location.href = "/approvals"
-    } catch (error) {
-      toast({
-        title: "Error creating batch",
-        description: "Failed to create payment batch. Please try again.",
-        variant: "destructive",
-      })
-    } finally {
-      setIsSubmitting(false)
-    }
+    //   // Redirect to approvals page
+    //   window.location.href = "/approvals"
+    // } catch (error) {
+    //   toast({
+    //     title: "Error creating batch",
+    //     description: "Failed to create payment batch. Please try again.",
+    //     variant: "destructive",
+    //   })
+    // } finally {
+    //   setIsSubmitting(false)
+    // }
   }
 
   const canProceedToStep2 =

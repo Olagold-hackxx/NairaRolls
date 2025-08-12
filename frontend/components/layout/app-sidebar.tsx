@@ -14,10 +14,12 @@ import {
   SidebarMenuItem,
 } from '@/components/ui/sidebar'
 import { useAppStore } from '@/lib/store'
-import { useWeb3 } from '@/components/providers/web3-provider'
+import { useAccount } from "@/lib/thirdweb-hooks";
 import { Button } from '@/components/ui/button'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
+import { useDisconnect, useActiveWallet } from "thirdweb/react";
+import ConnectWallet from '../ConnectWallet';
 
 const menuItems = [
   { title: 'Dashboard', url: '/dashboard', icon: Home },
@@ -31,7 +33,10 @@ const menuItems = [
 export function AppSidebar() {
   const pathname = usePathname()
   const { organization, user } = useAppStore()
-  const { account, isConnected, connect, disconnect } = useWeb3()
+  const { account, isConnected } = useAccount();
+  const { disconnect } = useDisconnect();
+  const wallet = useActiveWallet();
+  
 
   return (
     <Sidebar>
@@ -41,7 +46,7 @@ export function AppSidebar() {
           <div>
             <h2 className="text-lg font-semibold text-white">NairaRolls</h2>
             <p className="text-sm text-slate-400">
-              {organization?.name || 'No Organization'}
+              {organization?.name || "No Organization"}
             </p>
           </div>
         </div>
@@ -74,26 +79,25 @@ export function AppSidebar() {
               <div className="flex items-center gap-2 text-sm text-slate-300">
                 <Wallet className="h-4 w-4" />
                 <span className="truncate">
-                  {account?.slice(0, 6)}...{account?.slice(-4)}
+                  {account?.address.slice(0, 6)}...{account?.address.slice(-4)}
                 </span>
               </div>
-              <Button 
-                variant="outline" 
-                size="sm" 
-                onClick={disconnect}
+              <Button
+                variant="outline"
+                size="sm"
                 className="w-full border-slate-700 text-slate-300 hover:bg-slate-800 hover:text-white"
+                onClick={() => wallet && disconnect(wallet)}
               >
                 Disconnect
               </Button>
             </div>
           ) : (
-            <Button onClick={connect} className="w-full bg-primary hover:bg-primary/90">
-              <Wallet className="h-4 w-4 mr-2" />
-              Connect Wallet
-            </Button>
+            <div className='flex justify-center'>
+              <ConnectWallet />
+            </div>
           )}
         </div>
       </SidebarFooter>
     </Sidebar>
-  )
+  );
 }
