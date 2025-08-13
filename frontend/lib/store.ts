@@ -1,6 +1,26 @@
-import { create } from "zustand"
-import { persist } from "zustand/middleware"
-import type { User, Organization, Employee, PaymentBatch, Notification, NotificationPreferences, RegistrationData } from "./types"
+import { create } from "zustand";
+import { persist } from "zustand/middleware";
+import type {
+  User,
+  Organization,
+  Employee,
+  PaymentBatch,
+  Notification,
+  NotificationPreferences,
+  RegistrationData,
+} from "./types";
+
+// New interface for tracking batch transactions
+interface BatchTransaction {
+  batchName: string;
+  transactionHash: string;
+  gasUsed?: string;
+  blockNumber?: number;
+  executedAt: Date;
+  status: "successful" | "failed";
+  gasPrice?: string;
+  totalGasCost?: string;
+}
 
 interface AppState {
   // Auth
@@ -13,6 +33,7 @@ interface AppState {
   // Data
   employees: Employee[];
   paymentBatches: PaymentBatch[];
+  batchTransactions: BatchTransaction[]; // New: Track executed batches
 
   notifications: Notification[];
   notificationPreferences: NotificationPreferences;
@@ -22,14 +43,13 @@ interface AppState {
 
   // Payment Form State
   paymentForm: {
-    currentStep: number
-    batchName: string
-    signerAddresses: string[]
-    signatoryPercentage: number
-    selectedEmployees: string[]
-    payments: Record<string, string>
-  }
-
+    currentStep: number;
+    batchName: string;
+    signerAddresses: string[];
+    signatoryPercentage: number;
+    selectedEmployees: string[];
+    payments: Record<string, string>;
+  };
 
   // Actions
   setUser: (user: User | null) => void;
@@ -37,6 +57,16 @@ interface AppState {
   setEmployees: (employees: Employee[]) => void;
   setPaymentBatches: (batches: PaymentBatch[]) => void;
   setSidebarOpen: (open: boolean) => void;
+
+  // New: Batch Transaction Actions
+  addBatchTransaction: (
+    transaction: Omit<BatchTransaction, "executedAt">
+  ) => void;
+  updateBatchTransaction: (
+    batchName: string,
+    updates: Partial<BatchTransaction>
+  ) => void;
+  getBatchTransaction: (batchName: string) => BatchTransaction | null;
 
   addNotification: (
     notification: Omit<Notification, "id" | "timestamp" | "read">
@@ -46,13 +76,13 @@ interface AppState {
   removeNotification: (id: string) => void;
   setNotificationPreferences: (preferences: NotificationPreferences) => void;
   addEmployee: (employee: Employee) => void;
-   // Payment Form Actions
-  setPaymentFormStep: (step: number) => void
-  setPaymentFormData: (data: Partial<AppState["paymentForm"]>) => void
-  addSignerAddress: (address: string) => void
-  removeSignerAddress: (index: number) => void
-  updateSignerAddress: (index: number, address: string) => void
-  resetPaymentForm: () => void
+  // Payment Form Actions
+  setPaymentFormStep: (step: number) => void;
+  setPaymentFormData: (data: Partial<AppState["paymentForm"]>) => void;
+  addSignerAddress: (address: string) => void;
+  removeSignerAddress: (index: number) => void;
+  updateSignerAddress: (index: number, address: string) => void;
+  resetPaymentForm: () => void;
 
   setRegistrationData: (data: RegistrationData) => void;
   clearRegistrationData: () => void;
@@ -111,7 +141,8 @@ export const useAppStore = create<AppState>()(
           createdBy: "0x1234567890123456789012345678901234567890",
         },
       ],
-       // Initial payment form state
+      batchTransactions: [], // New: Initialize empty array
+      // Initial payment form state
       paymentForm: {
         currentStep: 1,
         batchName: "",
@@ -120,7 +151,6 @@ export const useAppStore = create<AppState>()(
         selectedEmployees: [],
         payments: {},
       },
-
 
       notifications: [
         {
@@ -149,12 +179,41 @@ export const useAppStore = create<AppState>()(
       sidebarOpen: true,
 
       // Actions
-      
       setUser: (user) => set({ user, isAuthenticated: !!user }),
       setOrganization: (organization) => set({ organization }),
       setEmployees: (employees) => set({ employees }),
       setPaymentBatches: (paymentBatches) => set({ paymentBatches }),
       setSidebarOpen: (sidebarOpen) => set({ sidebarOpen }),
+
+      // New: Batch Transaction Actions
+      addBatchTransaction: (transaction) => {
+        const newTransaction: BatchTransaction = {
+          ...transaction,
+          executedAt: new Date(),
+        };
+        set((state) => ({
+          batchTransactions: [...state.batchTransactions, newTransaction],
+        }));
+      },
+
+      updateBatchTransaction: (batchName, updates) => {
+        set((state) => ({
+          batchTransactions: state.batchTransactions.map((transaction) =>
+            transaction.batchName === batchName
+              ? { ...transaction, ...updates }
+              : transaction
+          ),
+        }));
+      },
+
+      getBatchTransaction: (batchName) => {
+        const state = get();
+        return (
+          state.batchTransactions.find(
+            (transaction) => transaction.batchName === batchName
+          ) || null
+        );
+      },
 
       addNotification: (notification) => {
         const newNotification: Notification = {
@@ -204,17 +263,17 @@ export const useAppStore = create<AppState>()(
       setRegistrationData: (registrationData) => set({ registrationData }),
       clearRegistrationData: () => set({ registrationData: null }),
 
-        // Payment Form Actions
+      // Payment Form Actions
       setPaymentFormStep: (step) => {
         set((state) => ({
           paymentForm: { ...state.paymentForm, currentStep: step },
-        }))
+        }));
       },
 
       setPaymentFormData: (data) => {
         set((state) => ({
           paymentForm: { ...state.paymentForm, ...data },
-        }))
+        }));
       },
 
       addSignerAddress: (address) => {
@@ -223,25 +282,29 @@ export const useAppStore = create<AppState>()(
             ...state.paymentForm,
             signerAddresses: [...state.paymentForm.signerAddresses, address],
           },
-        }))
+        }));
       },
 
       removeSignerAddress: (index) => {
         set((state) => ({
           paymentForm: {
             ...state.paymentForm,
-            signerAddresses: state.paymentForm.signerAddresses.filter((_, i) => i !== index),
+            signerAddresses: state.paymentForm.signerAddresses.filter(
+              (_, i) => i !== index
+            ),
           },
-        }))
+        }));
       },
 
       updateSignerAddress: (index, address) => {
         set((state) => ({
           paymentForm: {
             ...state.paymentForm,
-            signerAddresses: state.paymentForm.signerAddresses.map((addr, i) => (i === index ? address : addr)),
+            signerAddresses: state.paymentForm.signerAddresses.map((addr, i) =>
+              i === index ? address : addr
+            ),
           },
-        }))
+        }));
       },
 
       resetPaymentForm: () => {
@@ -254,7 +317,7 @@ export const useAppStore = create<AppState>()(
             selectedEmployees: [],
             payments: {},
           },
-        }))
+        }));
       },
 
       logout: () =>
@@ -264,6 +327,7 @@ export const useAppStore = create<AppState>()(
           isAuthenticated: false,
           employees: [],
           paymentBatches: [],
+          batchTransactions: [], // Clear transaction history on logout
           notifications: [],
           paymentForm: {
             currentStep: 1,
@@ -283,9 +347,9 @@ export const useAppStore = create<AppState>()(
         organization: state.organization,
         isAuthenticated: state.isAuthenticated,
         notificationPreferences: state.notificationPreferences,
-        registrationData: state.registrationData, // Persist registration data
+        registrationData: state.registrationData,
+        batchTransactions: state.batchTransactions, // Persist transaction history
       }),
     }
   )
 );
-
