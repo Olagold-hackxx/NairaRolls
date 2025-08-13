@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -19,70 +19,14 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
-import { Search, Filter, Download, ExternalLink, Calendar, TrendingUp, TrendingDown, Activity, DollarSign, Hash, Clock, CheckCircle, XCircle, AlertCircle } from 'lucide-react'
+import { Search, Filter, Download, ExternalLink, Calendar, TrendingUp, TrendingDown, Activity, DollarSign, Hash, Clock, CheckCircle, XCircle, AlertCircle, RefreshCw } from 'lucide-react'
 import { useGetAllBatchesWithStatus } from '@/hooks/ContractHooks/useGetAllBatchesWithStatus'
-
-// Mock transaction data
-const mockTransactions = [
-  {
-    id: '1',
-    hash: '0x1234567890abcdef1234567890abcdef12345678',
-    batchId: 'batch-001',
-    organizationId: 'org-1',
-    totalAmount: '2500000',
-    employeeCount: 25,
-    status: 'success' as const,
-    gasUsed: '0.0045',
-    createdAt: new Date('2024-01-15T10:30:00'),
-    blockNumber: 18945672,
-    network: 'Base'
-  },
-  {
-    id: '2',
-    hash: '0xabcdef1234567890abcdef1234567890abcdef12',
-    batchId: 'batch-002',
-    organizationId: 'org-1',
-    totalAmount: '1800000',
-    employeeCount: 18,
-    status: 'success' as const,
-    gasUsed: '0.0032',
-    createdAt: new Date('2024-01-10T14:20:00'),
-    blockNumber: 18932145,
-    network: 'Polygon'
-  },
-  {
-    id: '3',
-    hash: '0x9876543210fedcba9876543210fedcba98765432',
-    batchId: 'batch-003',
-    organizationId: 'org-1',
-    totalAmount: '3200000',
-    employeeCount: 32,
-    status: 'failed' as const,
-    gasUsed: '0.0021',
-    createdAt: new Date('2024-01-08T09:15:00'),
-    blockNumber: 18925678,
-    network: 'Base',
-    failureReason: 'Insufficient gas limit'
-  },
-  {
-    id: '4',
-    hash: '0xfedcba9876543210fedcba9876543210fedcba98',
-    batchId: 'batch-004',
-    organizationId: 'org-1',
-    totalAmount: '4100000',
-    employeeCount: 41,
-    status: 'pending' as const,
-    gasUsed: null,
-    createdAt: new Date('2024-01-16T16:45:00'),
-    blockNumber: null,
-    network: 'Base'
-  }
-]
 
 export default function TransactionsPage() {
   const [searchTerm, setSearchTerm] = useState('')
   const [statusFilter, setStatusFilter] = useState<string>('all')
   const [networkFilter, setNetworkFilter] = useState<string>('all')
+  
   const {
     batches,
     isLoading,
@@ -93,21 +37,70 @@ export default function TransactionsPage() {
     getTotalGasSpent,
     refetch,
   } = useGetAllBatchesWithStatus();
-  console.log('Batches:', batches);
-  console.log('Pending Batches:', getPendingBatches());
-  console.log('Successful Batches:', getSuccessfulBatches());
-  console.log('Executed Batches:', getExecutedBatches());
-  console.log('Total Gas Spent:', getTotalGasSpent());
-  console.log('Batch with Transaction:', getBatchWithTransaction('batch-001'));
 
-  const filteredTransactions = mockTransactions.filter(tx => {
-    const matchesSearch = 
-      tx.hash.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      tx.batchId.toLowerCase().includes(searchTerm.toLowerCase())
-    const matchesStatus = statusFilter === 'all' || tx.status === statusFilter
-    const matchesNetwork = networkFilter === 'all' || tx.network === networkFilter
-    return matchesSearch && matchesStatus && matchesNetwork
-  })
+  // Define transaction type
+  interface Transaction {
+    id: string;
+    hash: string;
+    batchId: string;
+    organizationId: string;
+    totalAmount: string;
+    employeeCount: number;
+    status: 'success' | 'failed' | 'pending';
+    gasUsed: string | null;
+    createdAt: Date;
+    blockNumber: number | null;
+    network: string;
+    failureReason?: string;
+    batch: any;
+  }
+
+  // Transform batches data for transactions table
+  const transactions = useMemo((): Transaction[] => {
+    if (!batches || batches.length === 0) return [];
+    
+    return batches.map((batch: any, index: number): Transaction => {
+      // Determine status based on batch properties
+      let status: 'success' | 'failed' | 'pending' = 'pending';
+      if (batch.isExecuted) {
+        status = 'success';
+      } else if (batch.isExpired) {
+        status = 'failed';
+      }
+      
+      // Calculate total amount from batch amounts
+      const totalAmount = batch.amounts 
+        ? batch.amounts.reduce((sum: number, amount: any) => sum + Number(amount), 0)
+        : 0;
+
+      return {
+        id: batch.name || `batch-${index}`,
+        hash: batch.transactionHash || `0x${'0'.repeat(64)}`, // Use actual tx hash or placeholder
+        batchId: batch.name || `batch-${index}`,
+        organizationId: 'current-org',
+        totalAmount: totalAmount.toString(),
+        employeeCount: batch.recipients?.length || 0,
+        status,
+        gasUsed: batch.gasUsed || null,
+        createdAt: batch.submittedAt ? new Date(batch.submittedAt * 1000) : new Date(),
+        blockNumber: batch.blockNumber || null,
+        network: 'Base', // You can make this dynamic based on your network detection
+        failureReason: batch.isExpired ? 'Batch expired' : undefined,
+        batch: batch // Keep reference to original batch data
+      };
+    });
+  }, [batches]);
+
+  const filteredTransactions = useMemo((): Transaction[] => {
+    return transactions.filter((tx: Transaction) => {
+      const matchesSearch = 
+        tx.hash.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        tx.batchId.toLowerCase().includes(searchTerm.toLowerCase())
+      const matchesStatus = statusFilter === 'all' || tx.status === statusFilter
+      const matchesNetwork = networkFilter === 'all' || tx.network === networkFilter
+      return matchesSearch && matchesStatus && matchesNetwork
+    })
+  }, [transactions, searchTerm, statusFilter, networkFilter]);
 
   const getStatusIcon = (status: string) => {
     switch (status) {
@@ -148,48 +141,83 @@ export default function TransactionsPage() {
     }
   }
 
-  const totalVolume = mockTransactions
-    .filter(tx => tx.status === 'success')
-    .reduce((sum, tx) => sum + parseFloat(tx.totalAmount), 0)
+  // Calculate real-time statistics
+  const stats = useMemo(() => {
+    const successfulBatches = getSuccessfulBatches();
+    const executedBatches = getExecutedBatches();
+    const pendingBatches = getPendingBatches();
+    
+    const totalVolume = successfulBatches.reduce((sum: number, batch: any) => {
+      const batchTotal = batch.amounts 
+        ? batch.amounts.reduce((batchSum: number, amount: any) => batchSum + Number(amount), 0)
+        : 0;
+      return sum + batchTotal;
+    }, 0);
 
-  const successfulTxs = mockTransactions.filter(tx => tx.status === 'success').length
-  const failedTxs = mockTransactions.filter(tx => tx.status === 'failed').length
-  const pendingTxs = mockTransactions.filter(tx => tx.status === 'pending').length
+    const successfulTxs = successfulBatches.length;
+    const failedTxs = batches.filter((batch: any) => batch.isExpired && !batch.isExecuted).length;
+    const pendingTxs = pendingBatches.length;
+    const totalGasUsed = getTotalGasSpent();
 
-  const totalGasUsed = mockTransactions
-    .filter(tx => tx.gasUsed)
-    .reduce((sum, tx) => sum + parseFloat(tx.gasUsed || '0'), 0)
+    return [
+      {
+        title: 'Total Volume',
+        value: `₦${totalVolume.toLocaleString()}`,
+        icon: DollarSign,
+        change: '+12.5%',
+        changeType: 'positive' as const
+      },
+      {
+        title: 'Successful Transactions',
+        value: successfulTxs.toString(),
+        icon: CheckCircle,
+        change: '+8.2%',
+        changeType: 'positive' as const
+      },
+      {
+        title: 'Failed Transactions',
+        value: failedTxs.toString(),
+        icon: XCircle,
+        change: '-2.1%',
+        changeType: 'negative' as const
+      },
+      {
+        title: 'Total Gas Used',
+        value: `${totalGasUsed.toFixed(4)} ETH`,
+        icon: Activity,
+        change: '+5.7%',
+        changeType: 'positive' as const
+      }
+    ];
+  }, [batches, getSuccessfulBatches, getExecutedBatches, getPendingBatches, getTotalGasSpent]);
 
-  const stats = [
-    {
-      title: 'Total Volume',
-      value: `₦${totalVolume.toLocaleString()}`,
-      icon: DollarSign,
-      change: '+12.5%',
-      changeType: 'positive' as const
-    },
-    {
-      title: 'Successful Transactions',
-      value: successfulTxs.toString(),
-      icon: CheckCircle,
-      change: '+8.2%',
-      changeType: 'positive' as const
-    },
-    {
-      title: 'Failed Transactions',
-      value: failedTxs.toString(),
-      icon: XCircle,
-      change: '-2.1%',
-      changeType: 'negative' as const
-    },
-    {
-      title: 'Total Gas Used',
-      value: `${totalGasUsed.toFixed(4)} ETH`,
-      icon: Activity,
-      change: '+5.7%',
-      changeType: 'positive' as const
-    }
-  ]
+  const handleRefresh = () => {
+    refetch();
+  };
+
+  const handleExportCSV = () => {
+    const csvContent = [
+      ['Transaction Hash', 'Batch ID', 'Network', 'Amount (₦)', 'Employees', 'Status', 'Gas Used', 'Date'],
+      ...filteredTransactions.map((tx: Transaction) => [
+        tx.hash,
+        tx.batchId,
+        tx.network,
+        tx.totalAmount,
+        tx.employeeCount.toString(),
+        tx.status,
+        tx.gasUsed || 'N/A',
+        tx.createdAt.toLocaleDateString()
+      ])
+    ].map((row: (string | number)[]) => row.join(',')).join('\n');
+
+    const blob = new Blob([csvContent], { type: 'text/csv' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `transactions-${new Date().toISOString().split('T')[0]}.csv`;
+    a.click();
+    window.URL.revokeObjectURL(url);
+  };
 
   return (
     <div className="space-y-6">
@@ -201,10 +229,22 @@ export default function TransactionsPage() {
             View all blockchain transactions and their details
           </p>
         </div>
-        <Button variant="outline" className="gap-2">
-          <Download className="h-4 w-4" />
-          Export CSV
-        </Button>
+        <div className="flex gap-2">
+          <Button 
+            variant="outline" 
+            size="sm" 
+            onClick={handleRefresh}
+            disabled={isLoading}
+            className="gap-2"
+          >
+            <RefreshCw className={`h-4 w-4 ${isLoading ? 'animate-spin' : ''}`} />
+            Refresh
+          </Button>
+          <Button variant="outline" onClick={handleExportCSV} className="gap-2">
+            <Download className="h-4 w-4" />
+            Export CSV
+          </Button>
+        </div>
       </div>
 
       {/* Stats Cards */}
@@ -240,9 +280,17 @@ export default function TransactionsPage() {
       {/* Filters and Search */}
       <Card>
         <CardHeader>
-          <CardTitle>Transaction History</CardTitle>
+          <CardTitle className="flex items-center justify-between">
+            <span>Transaction History</span>
+            {isLoading && (
+              <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                <RefreshCw className="h-4 w-4 animate-spin" />
+                Loading transactions...
+              </div>
+            )}
+          </CardTitle>
           <CardDescription>
-            All blockchain transactions for your organization
+            All blockchain transactions for your organization ({batches?.length || 0} total batches)
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -305,7 +353,7 @@ export default function TransactionsPage() {
             </div>
           </div>
 
-          {filteredTransactions.length > 0 ? (
+          {!isLoading && filteredTransactions.length > 0 ? (
             <div className="rounded-md border">
               <Table>
                 <TableHeader>
@@ -322,7 +370,7 @@ export default function TransactionsPage() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {filteredTransactions.map((transaction) => (
+                  {filteredTransactions.map((transaction: Transaction) => (
                     <TableRow key={transaction.id} className="hover:bg-muted/50">
                       <TableCell>
                         <div className="flex items-center space-x-2">
@@ -384,6 +432,7 @@ export default function TransactionsPage() {
                               : `https://polygonscan.com/tx/${transaction.hash}`
                             window.open(explorerUrl, '_blank')
                           }}
+                          disabled={!transaction.hash || transaction.hash.startsWith('0x000')}
                         >
                           <ExternalLink className="h-4 w-4" />
                           View
@@ -394,7 +443,7 @@ export default function TransactionsPage() {
                 </TableBody>
               </Table>
             </div>
-          ) : (
+          ) : !isLoading ? (
             <div className="text-center py-12">
               <Activity className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
               <h3 className="text-lg font-medium mb-2">No transactions found</h3>
@@ -403,6 +452,14 @@ export default function TransactionsPage() {
                   ? 'Try adjusting your search or filter criteria'
                   : 'Transactions will appear here once you start processing payments'
                 }
+              </p>
+            </div>
+          ) : (
+            <div className="text-center py-12">
+              <RefreshCw className="h-12 w-12 text-muted-foreground mx-auto mb-4 animate-spin" />
+              <h3 className="text-lg font-medium mb-2">Loading transactions...</h3>
+              <p className="text-muted-foreground">
+                Fetching your transaction history from the blockchain
               </p>
             </div>
           )}

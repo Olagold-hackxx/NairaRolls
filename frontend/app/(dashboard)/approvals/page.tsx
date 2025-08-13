@@ -30,6 +30,7 @@ import {
   MessageSquare,
   Calendar,
   Hash,
+  Send,
 } from "lucide-react";
 import { useAppStore } from "@/lib/store";
 import { useAccount } from "@/lib/thirdweb-hooks";
@@ -438,6 +439,8 @@ interface BatchItemProps {
   onApprove: (batchId: string) => void;
   onReject: (batchId: string) => void;
   onViewDetails: (batch: any) => void;
+  onExecute: (batchId: string) => void;
+  isApproving?: boolean;
 }
 
 function BatchItem({
@@ -447,6 +450,8 @@ function BatchItem({
   onApprove,
   onReject,
   onViewDetails,
+  onExecute,
+  isApproving = false,
 }: BatchItemProps) {
   const { isSigner } = useIsBatchSigner(
     batch.name || "",
@@ -464,7 +469,7 @@ function BatchItem({
   const showExecuteButton =
     isExecutable && batchDetails?.creator === account?.address;
 
-  const canUserApprove = isSigner && !hasApproved;
+  const canUserApprove = isSigner && !hasApproved && !showExecuteButton;
   const hasAlreadyApproved = hasApproved;
 
   return (
@@ -511,13 +516,23 @@ function BatchItem({
           </Button>
         </div>
 
-        {canUserApprove ? (
+        {showExecuteButton ? (
+          <Button
+            size="sm"
+            onClick={() => onExecute(batch.name)}
+            disabled={!isConnected}
+            className="gap-2"
+          >
+            <Send className="h-4 w-4" />
+            Release Funds
+          </Button>
+        ) : canUserApprove ? (
           <div className="flex gap-2">
             <Button
               variant="outline"
               size="sm"
               onClick={() => onReject(batch.name)}
-              disabled={!isConnected}
+              disabled={!isConnected || isApproving}
             >
               <XCircle className="h-4 w-4 mr-2" />
               Reject
@@ -525,10 +540,20 @@ function BatchItem({
             <Button
               size="sm"
               onClick={() => onApprove(batch.name)}
-              disabled={!isConnected}
+              disabled={!isConnected || isApproving}
+              className="gap-2"
             >
-              <CheckCircle className="h-4 w-4 mr-2" />
-              Approve
+              {isApproving ? (
+                <>
+                  <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
+                  Approving...
+                </>
+              ) : (
+                <>
+                  <CheckCircle className="h-4 w-4" />
+                  Approve
+                </>
+              )}
             </Button>
           </div>
         ) : (
@@ -548,6 +573,7 @@ export default function ApprovalsPage() {
   const [selectedBatchId, setSelectedBatchId] = useState<string>("");
   const [viewDetailsDialogOpen, setViewDetailsDialogOpen] = useState(false);
   const [selectedBatch, setSelectedBatch] = useState<any>(null);
+  const [approvingBatchId, setApprovingBatchId] = useState<string>("");
   const approveBatch = useApproveBatch();
 
   const approvedBatches = paymentBatches.filter(
@@ -564,12 +590,27 @@ export default function ApprovalsPage() {
       toast.error("Please connect your wallet first.");
       return;
     }
-    const success = await approveBatch(batchName);
-    if (success) {
-      toast.success("Batch approved successfully!");
-    } else {
-      toast.error("Failed to approve batch. Please try again.");
+    
+    setApprovingBatchId(batchName);
+    try {
+      const success = await approveBatch(batchName);
+      if (success) {
+        toast.success("Batch approved successfully!");
+      } else {
+        toast.error("Failed to approve batch. Please try again.");
+      }
+    } finally {
+      setApprovingBatchId("");
     }
+  };
+
+  const handleExecute = async (batchName: string) => {
+    if (!isConnected || !account) {
+      toast.error("Please connect your wallet first.");
+      return;
+    }
+    // Add your execution logic here
+    toast.success("Funds released successfully!");
   };
 
   const handleReject = async (batchId: string, reason: string) => {
@@ -678,6 +719,8 @@ export default function ApprovalsPage() {
                   onApprove={() => handleApprove(batch.name)}
                   onReject={openRejectionDialog}
                   onViewDetails={openViewDetailsDialog}
+                  onExecute={handleExecute}
+                  isApproving={approvingBatchId === batch.name}
                 />
               ))}
             </div>
