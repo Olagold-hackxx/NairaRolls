@@ -31,6 +31,7 @@ import { useAppStore } from "@/lib/store"
 import { useAccount } from "@/lib/thirdweb-hooks"
 import Link from "next/link"
 import { toast } from "sonner"
+import useCreateBatchPayroll from "@/hooks/ContractHooks/useCreateBatchPayroll"
 
 export default function NewPaymentPage() {
   const {
@@ -46,6 +47,8 @@ export default function NewPaymentPage() {
 
   const { isConnected } = useAccount()
   const [errors, setErrors] = useState<Record<string, string>>({})
+
+  const createBatch = useCreateBatchPayroll();
 
   const validateStep = (step: number): boolean => {
     const newErrors: Record<string, string> = {}
@@ -165,10 +168,26 @@ export default function NewPaymentPage() {
     }
 
     try {
-      // Here you would submit to your backend/blockchain
-      toast.success("Payment batch created successfully!")
-      resetPaymentForm()
-      window.location.href = "/approvals"
+      const recipientAddresses = paymentForm.selectedEmployees
+        .map((employeeId) => {
+          const employee = employees.find((e) => e.id === employeeId);
+          return employee?.walletAddress || "";
+        })
+        .filter((address) => address !== "");
+
+      const result = await createBatch({
+        batchName: paymentForm.batchName,
+        signers: paymentForm.signerAddresses.filter((addr) => addr.trim() !== ""),
+        quorum: requiredApprovals,
+        recipients: recipientAddresses,
+        amounts: paymentForm.selectedEmployees.map((id) => paymentForm.payments[id]),
+      });
+
+      if (result) {
+        toast.success("Payment batch created successfully!");
+        resetPaymentForm();
+        window.location.href = "/approvals";
+      }
     } catch (error) {
       toast.error("Failed to create payment batch")
     }

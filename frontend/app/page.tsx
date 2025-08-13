@@ -36,7 +36,6 @@ import {
 } from "lucide-react"
 import ConnectWallet from "@/components/ConnectWallet"
 import { useDisconnect, useActiveWallet } from "thirdweb/react";
-import { toast } from "sonner"
 
 function OrganizationRegistrationForm({ onComplete }: { onComplete: () => void }) {
   const [formData, setFormData] = useState({
@@ -173,16 +172,6 @@ export default function LandingPage() {
     }
   }, [account])
 
-  // const handleMainCTA = async () => {
-  //   if (!isConnected) {
-  //     toast.warning("Please connect your wallet first.");
-  //   } else if (isRegistered) {
-  //     router.push("/dashboard")
-  //   } else {
-  //     setShowRegistration(true)
-  //   }
-  // }
-
   const handleRegistrationComplete = () => {
     if (account) {
       localStorage.setItem(`registered_${account}`, "true")
@@ -191,18 +180,6 @@ export default function LandingPage() {
       router.push("/dashboard")
     }
   }
-
-  // const getCTAText = () => {
-  //   if (!isConnected) return "Connect Wallet"
-  //   if (!isRegistered) return "Complete Setup"
-  //   return "Go to Dashboard"
-  // }
-
-  // const getCTAIcon = () => {
-  //   if (!isConnected) return <ConnectWallet />
-  //   if (!isRegistered) return <UserPlus className="w-4 h-4" />
-  //   return <ArrowRight className="w-4 h-4" />
-  // }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
