@@ -154,9 +154,9 @@ export default function TransactionsPage() {
     const pendingTxs = pendingBatches.length;
     const totalGasUsed = getTotalGasSpent();
 
-    const formattedGasCost = Number.parseFloat(
-      formatEther(totalGasUsed)
-    ).toFixed(8);
+    // const formattedGasCost = Number.parseFloat(
+    //   formatEther(totalGasUsed)
+    // ).toFixed(8);
 
     return [
       {
@@ -182,7 +182,7 @@ export default function TransactionsPage() {
       },
       {
         title: "Total Gas Used",
-        value: `${formattedGasCost} ETH`,
+        value: `${Number(totalGasUsed)} WEI`,
         icon: Activity,
         change: "+5.7%",
         changeType: "positive" as const,
@@ -409,7 +409,7 @@ export default function TransactionsPage() {
                       </TableCell>
                       <TableCell>
                         <div className="text-sm">
-                          {transaction.gasUsed ? `${Number.parseFloat(transaction.gasUsed).toExponential(1)} ETH` : '-'}
+                          {transaction.gasUsed ? `${Number.parseFloat(transaction.gasUsed)} WEI` : '-'}
                         </div>
                       </TableCell>
                       <TableCell>
