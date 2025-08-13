@@ -111,7 +111,7 @@ export const useGetPendingApprovals = () => {
 
   useEffect(() => {
     fetchPendingApprovals();
-  }, [fetchPendingApprovals]);
+  }, []);
 
   return { pendingBatches, isLoading, error, refetch: fetchPendingApprovals };
 };

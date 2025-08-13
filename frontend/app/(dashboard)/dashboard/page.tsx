@@ -7,41 +7,50 @@ import { DollarSign, Users, Clock, TrendingUp, Plus, Upload, CheckCircle } from 
 import { useAppStore } from '@/lib/store'
 import { useAccount } from "@/lib/thirdweb-hooks";
 import Link from 'next/link'
+import { useGetContractCNGNBalance } from '@/hooks/ContractHooks/useGetContractCNGNBalance'
+import { formatUnits } from 'ethers'
+import { useGetPendingApprovals } from '@/hooks/ContractHooks/useGetPendingApprovals'
 
 export default function DashboardPage() {
-  const { organization, employees, paymentBatches } = useAppStore()
+  const { employees, paymentBatches } = useAppStore()
   const { isConnected } = useAccount();
+  const { contractBalance } = useGetContractCNGNBalance();
+  const formattedBalance = contractBalance
+    ? Number.parseInt(formatUnits(contractBalance, 6)).toLocaleString("en-US")
+    : "0";
+  const { pendingBatches } = useGetPendingApprovals();
+  console.log("Pending Batches:", pendingBatches.length);
 
   const stats = [
     {
-      title: 'Total Employees',
+      title: "Total Employees",
       value: employees.length.toString(),
-      description: 'Active employees',
+      description: "Active employees",
       icon: Users,
-      trend: '+2 this month'
+      trend: "+2 this month",
     },
     {
-      title: 'cNGN Balance',
-      value: organization?.cNGNBalance || '0',
-      description: 'Available balance',
+      title: "cNGN Balance",
+      value: `₦${formattedBalance}` || "0",
+      description: "Available balance",
       icon: DollarSign,
-      trend: 'Last updated 2m ago'
+      trend: "Last updated 2m ago",
     },
     {
-      title: 'Pending Approvals',
-      value: paymentBatches.filter(b => b.status === 'pending').length.toString(),
-      description: 'Awaiting signatures',
+      title: "Pending Approvals",
+      value: pendingBatches.length.toString(),
+      description: "Awaiting signatures",
       icon: Clock,
-      trend: '2 urgent'
+      trend: "2 urgent",
     },
     {
-      title: 'This Month',
-      value: '₦2,450,000',
-      description: 'Total payroll sent',
+      title: "This Month",
+      value: "₦2,450,000",
+      description: "Total payroll sent",
       icon: TrendingUp,
-      trend: '+12% from last month'
-    }
-  ]
+      trend: "+12% from last month",
+    },
+  ];
 
   const quickActions = [
     {

@@ -21,6 +21,7 @@ import {
 } from '@/components/ui/dropdown-menu'
 import { Search, Filter, Download, ExternalLink, Calendar, TrendingUp, TrendingDown, Activity, DollarSign, Hash, Clock, CheckCircle, XCircle, AlertCircle, RefreshCw } from 'lucide-react'
 import { useGetAllBatchesWithStatus } from '@/hooks/ContractHooks/useGetAllBatchesWithStatus'
+import { formatEther } from 'ethers'
 
 export default function TransactionsPage() {
   const [searchTerm, setSearchTerm] = useState('')
@@ -32,7 +33,6 @@ export default function TransactionsPage() {
     isLoading,
     getPendingBatches,
     getSuccessfulBatches,
-    getBatchWithTransaction,
     getExecutedBatches,
     getTotalGasSpent,
     refetch,
@@ -61,12 +61,7 @@ export default function TransactionsPage() {
     
     return batches.map((batch: any, index: number): Transaction => {
       // Determine status based on batch properties
-      let status: 'success' | 'failed' | 'pending' = 'pending';
-      if (batch.isExecuted) {
-        status = 'success';
-      } else if (batch.isExpired) {
-        status = 'failed';
-      }
+      
       
       // Calculate total amount from batch amounts
       const totalAmount = batch.amounts 
@@ -75,12 +70,12 @@ export default function TransactionsPage() {
 
       return {
         id: batch.name || `batch-${index}`,
-        hash: batch.transactionHash || `0x${'0'.repeat(64)}`, // Use actual tx hash or placeholder
+        hash: batch.hash || `0x${'0'.repeat(64)}`, // Use actual tx hash or placeholder
         batchId: batch.name || `batch-${index}`,
         organizationId: 'current-org',
         totalAmount: totalAmount.toString(),
         employeeCount: batch.recipients?.length || 0,
-        status,
+        status: batch.status,
         gasUsed: batch.gasUsed || null,
         createdAt: batch.submittedAt ? new Date(batch.submittedAt * 1000) : new Date(),
         blockNumber: batch.blockNumber || null,
@@ -117,7 +112,7 @@ export default function TransactionsPage() {
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'success':
+      case 'successful':
         return 'bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400'
       case 'failed':
         return 'bg-red-100 text-red-800 dark:bg-red-900/20 dark:text-red-400'
@@ -159,35 +154,39 @@ export default function TransactionsPage() {
     const pendingTxs = pendingBatches.length;
     const totalGasUsed = getTotalGasSpent();
 
+    const formattedGasCost = Number.parseFloat(
+      formatEther(totalGasUsed)
+    ).toFixed(8);
+
     return [
       {
-        title: 'Total Volume',
+        title: "Total Volume",
         value: `₦${totalVolume.toLocaleString()}`,
         icon: DollarSign,
-        change: '+12.5%',
-        changeType: 'positive' as const
+        change: "+12.5%",
+        changeType: "positive" as const,
       },
       {
-        title: 'Successful Transactions',
+        title: "Successful Transactions",
         value: successfulTxs.toString(),
         icon: CheckCircle,
-        change: '+8.2%',
-        changeType: 'positive' as const
+        change: "+8.2%",
+        changeType: "positive" as const,
       },
       {
-        title: 'Failed Transactions',
+        title: "Failed Transactions",
         value: failedTxs.toString(),
         icon: XCircle,
-        change: '-2.1%',
-        changeType: 'negative' as const
+        change: "-2.1%",
+        changeType: "negative" as const,
       },
       {
-        title: 'Total Gas Used',
-        value: `${totalGasUsed.toFixed(4)} ETH`,
+        title: "Total Gas Used",
+        value: `${formattedGasCost} ETH`,
         icon: Activity,
-        change: '+5.7%',
-        changeType: 'positive' as const
-      }
+        change: "+5.7%",
+        changeType: "positive" as const,
+      },
     ];
   }, [batches, getSuccessfulBatches, getExecutedBatches, getPendingBatches, getTotalGasSpent]);
 
@@ -410,7 +409,7 @@ export default function TransactionsPage() {
                       </TableCell>
                       <TableCell>
                         <div className="text-sm">
-                          {transaction.gasUsed ? `${transaction.gasUsed} ETH` : '-'}
+                          {transaction.gasUsed ? `${Number.parseFloat(transaction.gasUsed).toExponential(1)} ETH` : '-'}
                         </div>
                       </TableCell>
                       <TableCell>

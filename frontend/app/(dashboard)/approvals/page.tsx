@@ -42,6 +42,7 @@ import { useApproveBatch } from "@/hooks/ContractHooks/useApproveBatch";
 import { useIsBatchExecutable } from "@/hooks/ContractHooks/useIsBatchExecutable";
 import { useGetBatchDetails } from "@/hooks/ContractHooks/useGetBatchDetails";
 import { is } from "zod/v4/locales";
+import { useExecuteBatchPayroll } from "@/hooks/ContractHooks/useExecuteBatchPayroll";
 
 interface RejectionDialogProps {
   batchId: string;
@@ -575,6 +576,7 @@ export default function ApprovalsPage() {
   const [selectedBatch, setSelectedBatch] = useState<any>(null);
   const [approvingBatchId, setApprovingBatchId] = useState<string>("");
   const approveBatch = useApproveBatch();
+  const executeBatchPayroll = useExecuteBatchPayroll();
 
   const approvedBatches = paymentBatches.filter(
     (batch) => batch.status === "approved"
@@ -609,7 +611,12 @@ export default function ApprovalsPage() {
       toast.error("Please connect your wallet first.");
       return;
     }
-    // Add your execution logic here
+    
+    const success = await executeBatchPayroll(batchName);
+    if (!success) {
+      toast.error("Failed to release funds. Please try again.");
+      return;
+    }
     toast.success("Funds released successfully!");
   };
 

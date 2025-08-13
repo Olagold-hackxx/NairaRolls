@@ -22,6 +22,7 @@ import {
 } from '@/components/ui/dropdown-menu'
 import { useAppStore } from '@/lib/store'
 import Link from 'next/link'
+import { formatUnits } from 'ethers'
 
 export default function EmployeesPage() {
   const { employees } = useAppStore()
@@ -100,7 +101,7 @@ export default function EmployeesPage() {
                       {employee.walletAddress.slice(0, 6)}...{employee.walletAddress.slice(-4)}
                     </TableCell>
                     <TableCell>
-                      ₦{parseFloat(employee.salary).toLocaleString()}
+                      ₦{Number(formatUnits(employee.salary, 6)).toLocaleString()}
                     </TableCell>
                     <TableCell>
                       <Badge 
