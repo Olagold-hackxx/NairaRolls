@@ -381,7 +381,7 @@ export default function NewPaymentPage() {
                         </div>
                         <div className="text-right">
                           <Badge variant="outline" className="font-medium">
-                            ₦{Number.parseFloat(employee.salary).toLocaleString()}
+                            ₦{(Number(employee.salary) / 1000000).toLocaleString()}
                           </Badge>
                           <p className="text-xs text-muted-foreground mt-1">Default salary</p>
                         </div>
@@ -429,7 +429,7 @@ export default function NewPaymentPage() {
                       <div>
                         <p className="font-semibold">{employee.name}</p>
                         <p className="text-sm text-muted-foreground">
-                          Default: ₦{Number.parseFloat(employee.salary).toLocaleString()}
+                          Default: ₦{(Number(employee.salary) / 1000000).toLocaleString()}
                         </p>
                       </div>
                       <Badge variant="secondary" className="text-xs">
@@ -444,7 +444,7 @@ export default function NewPaymentPage() {
                         <Input
                           id={`amount-${employeeId}`}
                           type="number"
-                          value={paymentForm.payments[employeeId] || ""}
+                          value={Number(paymentForm.payments[employeeId]) / 1000000 || ""}
                           onChange={(e) => handleAmountChange(employeeId, e.target.value)}
                           placeholder="0"
                           className="text-right font-medium"
@@ -466,7 +466,7 @@ export default function NewPaymentPage() {
               <div className="flex justify-between items-center">
                 <div>
                   <p className="text-sm text-muted-foreground">Total Amount</p>
-                  <p className="text-2xl font-bold text-foreground">₦{totalAmount.toLocaleString()}</p>
+                  <p className="text-2xl font-bold text-foreground">₦{(totalAmount / 1000000).toLocaleString()}</p>
                 </div>
                 <div className="text-right">
                   <p className="text-sm text-muted-foreground">Employees</p>
@@ -548,7 +548,7 @@ export default function NewPaymentPage() {
               <Card className="text-center">
                 <CardContent className="pt-6">
                   <DollarSign className="h-8 w-8 text-primary mx-auto mb-2" />
-                  <p className="text-2xl font-bold">₦{totalAmount.toLocaleString()}</p>
+                  <p className="text-2xl font-bold">₦{(totalAmount / 1000000).toLocaleString()}</p>
                   <p className="text-sm text-muted-foreground">Total Amount</p>
                 </CardContent>
               </Card>
@@ -584,7 +584,7 @@ export default function NewPaymentPage() {
                           </p>
                         </div>
                         <p className="font-semibold">
-                          ₦{Number.parseFloat(paymentForm.payments[employeeId] || "0").toLocaleString()}
+                          ₦{(Number(paymentForm.payments[employeeId]) / 1000000).toLocaleString()}
                         </p>
                       </div>
                     )
