@@ -161,7 +161,7 @@ export default function TransactionsPage() {
     return [
       {
         title: "Total Volume",
-        value: `₦${totalVolume.toLocaleString()}`,
+        value: `₦${(totalVolume / 1000000).toLocaleString()}`,
         icon: DollarSign,
         change: "+12.5%",
         changeType: "positive" as const,
