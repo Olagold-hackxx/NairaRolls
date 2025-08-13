@@ -2,8 +2,8 @@
 pragma solidity ^0.8.20;
 
 import {Test, console} from "forge-std/Test.sol";
-import {NairaRollsMultisig} from "../src/MockNairaRollsMultisig.sol";
-import {MockERC20} from "../src/MockERC20.sol";
+import {NairaRollsMultisig} from "../src/v1/MockNairaRollsMultisig.sol";
+import {MockERC20} from "../src/v1/MockERC20.sol";
 
 contract NairaRollsMultisigTest is Test {
     NairaRollsMultisig public multisig;

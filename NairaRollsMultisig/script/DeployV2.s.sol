@@ -3,16 +3,16 @@ pragma solidity ^0.8.20;
 
 import {Script} from "forge-std/Script.sol";
 import {console} from "forge-std/console.sol";
-import {NairaRollsMultisigFactory} from "../src/v1/NairaRollsMultisigFactory.sol";
+import {BatchPayrollMultisig} from "../src/v2/BatchPayrollMultisig.sol";
 
 contract DeployScript is Script {
     function run() external {
         uint256 deployerPrivateKey = vm.envUint("PRIVATE_KEY");
         vm.startBroadcast(deployerPrivateKey);
 
-        NairaRollsMultisigFactory nairaRollsMultisigFactory = new NairaRollsMultisigFactory();
+        BatchPayrollMultisig batchPayrollMultisig = new BatchPayrollMultisig();
 
-        console.log("NairaRolls Multisig Factory deployed at:", address(nairaRollsMultisigFactory));
+        console.log("Batch Payroll Multisig Contract deployed at:", address(batchPayrollMultisig));
 
         vm.stopBroadcast();
     }
@@ -27,7 +27,4 @@ contract DeployScript is Script {
 // mkdir -p extractedABIs
 
 // # Extract the ABI
-// jq '.abi' out/NairaRollsMultisig.sol/NairaRollsMultisig.json > extractedABIs/NairaRollsMultisig.json
-
-// # Also extract factory ABI
-// jq '.abi' out/NairaRollsMultisigFactory.sol/NairaRollsMultisigFactory.json > extractedABIs/NairaRollsMultisigFactory.json
+// jq '.abi' out/BatchPayrollMultisig.sol/BatchPayrollMultisig.json > extractedABIs/BatchPayrollMultisig.json

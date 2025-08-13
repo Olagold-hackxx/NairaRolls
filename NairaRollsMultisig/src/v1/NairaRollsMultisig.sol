@@ -99,7 +99,6 @@ contract NairaRollsMultisig {
         _;
     }
 
-    // Constructor
     constructor(address[] memory _signers, uint256 _threshold) {
         if (_signers.length == 0) revert InvalidSigner();
         if (_threshold == 0 || _threshold > _signers.length) revert InvalidThreshold();
