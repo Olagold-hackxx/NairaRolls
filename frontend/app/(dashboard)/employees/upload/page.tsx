@@ -235,8 +235,12 @@ export default function UploadEmployeesPage() {
           </Button>
         </Link>
         <div className="flex-1">
-          <h1 className="text-3xl font-bold tracking-tight">Upload Employees</h1>
-          <p className="text-muted-foreground">Bulk import employees using a CSV file</p>
+          <h1 className="text-3xl font-bold tracking-tight">
+            Upload Employees
+          </h1>
+          <p className="text-muted-foreground">
+            Bulk import employees using a CSV file
+          </p>
         </div>
       </div>
 
@@ -253,9 +257,15 @@ export default function UploadEmployeesPage() {
           <CardContent className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="csvFile">Select CSV File</Label>
-              <Input id="csvFile" type="file" accept=".csv" onChange={handleFileChange} />
+              <Input
+                id="csvFile"
+                type="file"
+                accept=".csv"
+                onChange={handleFileChange}
+              />
               <p className="text-xs text-muted-foreground">
-                Upload a CSV file with employee information. Maximum file size: 5MB
+                Upload a CSV file with employee information. Maximum file size:
+                5MB
               </p>
             </div>
 
@@ -263,12 +273,18 @@ export default function UploadEmployeesPage() {
               <div className="flex items-center gap-2 p-3 bg-muted rounded-lg">
                 <FileText className="h-4 w-4" />
                 <span className="text-sm font-medium">{file.name}</span>
-                <Badge variant="secondary">{(file.size / 1024).toFixed(1)} KB</Badge>
+                <Badge variant="secondary">
+                  {(file.size / 1024).toFixed(1)} KB
+                </Badge>
               </div>
             )}
 
             <div className="flex gap-2">
-              <Button onClick={processFile} disabled={!file || isProcessing} className="flex-1">
+              <Button
+                onClick={processFile}
+                disabled={!file || isProcessing}
+                className="flex-1"
+              >
                 {isProcessing ? (
                   <>
                     <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin mr-2" />
@@ -302,7 +318,8 @@ export default function UploadEmployeesPage() {
                   • <strong>name</strong> - Employee full name
                 </li>
                 <li>
-                  • <strong>walletaddress</strong> - Ethereum wallet address (0x...)
+                  • <strong>walletaddress</strong> - Ethereum wallet address
+                  (0x...)
                 </li>
                 <li>
                   • <strong>role</strong> - Job title or role
@@ -329,9 +346,12 @@ export default function UploadEmployeesPage() {
             <div className="flex items-start gap-2 p-3 bg-yellow-50 dark:bg-yellow-950 rounded-lg">
               <AlertCircle className="h-4 w-4 text-yellow-600 dark:text-yellow-400 mt-0.5" />
               <div className="text-sm">
-                <p className="font-medium text-yellow-800 dark:text-yellow-200">Important:</p>
+                <p className="font-medium text-yellow-800 dark:text-yellow-200">
+                  Important:
+                </p>
                 <p className="text-yellow-700 dark:text-yellow-300">
-                  Verify all wallet addresses are correct. Payments cannot be reversed.
+                  Verify all wallet addresses are correct. Payments cannot be
+                  reversed.
                 </p>
               </div>
             </div>
@@ -349,10 +369,15 @@ export default function UploadEmployeesPage() {
                 Employee Preview ({employees.length} total)
               </CardTitle>
               <div className="flex items-center gap-2">
-                <Badge variant="default" className="bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200">
+                <Badge
+                  variant="default"
+                  className="bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200"
+                >
                   {validCount} Valid
                 </Badge>
-                {invalidCount > 0 && <Badge variant="destructive">{invalidCount} Invalid</Badge>}
+                {invalidCount > 0 && (
+                  <Badge variant="destructive">{invalidCount} Invalid</Badge>
+                )}
               </div>
             </div>
           </CardHeader>
@@ -384,7 +409,10 @@ export default function UploadEmployeesPage() {
                   </TableHeader>
                   <TableBody>
                     {employees.map((employee, index) => (
-                      <TableRow key={index} className={!employee.isValid ? "bg-destructive/5" : ""}>
+                      <TableRow
+                        key={index}
+                        className={!employee.isValid ? "bg-destructive/5" : ""}
+                      >
                         <TableCell>
                           {employee.isValid ? (
                             <CheckCircle className="h-4 w-4 text-green-500" />
@@ -392,12 +420,18 @@ export default function UploadEmployeesPage() {
                             <AlertCircle className="h-4 w-4 text-destructive" />
                           )}
                         </TableCell>
-                        <TableCell className="font-medium">{employee.name}</TableCell>
+                        <TableCell className="font-medium">
+                          {employee.name}
+                        </TableCell>
                         <TableCell className="font-mono text-xs">
-                          {employee.walletAddress.slice(0, 6)}...{employee.walletAddress.slice(-4)}
+                          {employee.walletAddress.slice(0, 6)}...
+                          {employee.walletAddress.slice(-4)}
                         </TableCell>
                         <TableCell>{employee.role}</TableCell>
-                        <TableCell>₦{Number(employee.salary || 0).toLocaleString()}</TableCell>
+                        <TableCell>
+                          ₦
+                          {(Number(employee.salary) / 1000000).toLocaleString()}
+                        </TableCell>
                         <TableCell>
                           <Button
                             variant="ghost"
@@ -417,13 +451,18 @@ export default function UploadEmployeesPage() {
               {/* Error Summary */}
               {invalidCount > 0 && (
                 <div className="space-y-2">
-                  <h4 className="font-medium text-destructive">Validation Errors:</h4>
+                  <h4 className="font-medium text-destructive">
+                    Validation Errors:
+                  </h4>
                   <div className="space-y-1">
                     {employees
                       .filter((emp) => !emp.isValid)
                       .map((employee, index) => (
                         <div key={index} className="text-sm text-destructive">
-                          <strong>{employee.name || `Row ${index + 1}`}:</strong> {employee.errors.join(", ")}
+                          <strong>
+                            {employee.name || `Row ${index + 1}`}:
+                          </strong>{" "}
+                          {employee.errors.join(", ")}
                         </div>
                       ))}
                   </div>
@@ -455,5 +494,5 @@ export default function UploadEmployeesPage() {
         </Card>
       )}
     </div>
-  )
+  );
 }
