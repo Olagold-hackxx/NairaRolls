@@ -20,6 +20,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import { Search, Filter, Download, ExternalLink, Calendar, TrendingUp, TrendingDown, Activity, DollarSign, Hash, Clock, CheckCircle, XCircle, AlertCircle } from 'lucide-react'
+import { useGetAllBatchesWithStatus } from '@/hooks/ContractHooks/useGetAllBatchesWithStatus'
 
 // Mock transaction data
 const mockTransactions = [
@@ -82,6 +83,22 @@ export default function TransactionsPage() {
   const [searchTerm, setSearchTerm] = useState('')
   const [statusFilter, setStatusFilter] = useState<string>('all')
   const [networkFilter, setNetworkFilter] = useState<string>('all')
+  const {
+    batches,
+    isLoading,
+    getPendingBatches,
+    getSuccessfulBatches,
+    getBatchWithTransaction,
+    getExecutedBatches,
+    getTotalGasSpent,
+    refetch,
+  } = useGetAllBatchesWithStatus();
+  console.log('Batches:', batches);
+  console.log('Pending Batches:', getPendingBatches());
+  console.log('Successful Batches:', getSuccessfulBatches());
+  console.log('Executed Batches:', getExecutedBatches());
+  console.log('Total Gas Spent:', getTotalGasSpent());
+  console.log('Batch with Transaction:', getBatchWithTransaction('batch-001'));
 
   const filteredTransactions = mockTransactions.filter(tx => {
     const matchesSearch = 

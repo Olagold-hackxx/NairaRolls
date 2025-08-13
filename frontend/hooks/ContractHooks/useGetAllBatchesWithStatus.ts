@@ -157,7 +157,7 @@ export const useGetAllBatchesWithStatus = () => {
 
   useEffect(() => {
     fetchAllBatchesWithStatus();
-  }, [fetchAllBatchesWithStatus]);
+  }, []);
 
   // Helper functions to filter batches by status
   const getPendingBatches = useCallback(() => {
