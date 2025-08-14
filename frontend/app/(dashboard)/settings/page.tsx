@@ -311,7 +311,7 @@ export default function SettingsPage() {
                       variant="outline"
                       size="sm"
                       onClick={() =>
-                        copyToClipboard(contractAddress, "Connected wallet")
+                        copyToClipboard(contractAddress, "Organization wallet")
                       }
                     >
                       {copiedAddress === "Connected wallet" ? (
