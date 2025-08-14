@@ -63,6 +63,7 @@ type MultisigFormData = z.infer<typeof multisigSchema>
 export default function SettingsPage() {
   const { organization, user, setOrganization } = useAppStore()
   const { account, isConnected } = useAccount();
+  const contractAddress = "0xdc52b462372F5958b391F1b227fFc432F876d280";
 
   const [isLoading, setIsLoading] = useState(false)
   const [copiedAddress, setCopiedAddress] = useState<string | null>(null)
@@ -294,7 +295,7 @@ export default function SettingsPage() {
                 <div>
                   <p className="font-medium">Organization Wallet</p>
                   <p className="text-sm text-muted-foreground font-mono">
-                    0xdc52b462372F5958b391F1b227fFc432F876d280
+                    {contractAddress}
                   </p>
                   <p className="text-xs text-muted-foreground mt-1">
                     This wallet is used for all organization transactions and
@@ -310,7 +311,7 @@ export default function SettingsPage() {
                       variant="outline"
                       size="sm"
                       onClick={() =>
-                        copyToClipboard(account?.address, "Connected wallet")
+                        copyToClipboard(contractAddress, "Connected wallet")
                       }
                     >
                       {copiedAddress === "Connected wallet" ? (
