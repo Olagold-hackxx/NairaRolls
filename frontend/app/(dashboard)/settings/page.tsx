@@ -294,7 +294,7 @@ export default function SettingsPage() {
                 <div>
                   <p className="font-medium">Organization Wallet</p>
                   <p className="text-sm text-muted-foreground font-mono">
-                    {"0xdc52b462372F5958b391F1b227fFc432F876d280" || account?.address}
+                    0xdc52b462372F5958b391F1b227fFc432F876d280
                   </p>
                   <p className="text-xs text-muted-foreground mt-1">
                     This wallet is used for all organization transactions and
