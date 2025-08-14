@@ -391,7 +391,7 @@ export default function TransactionsPage() {
                       </TableCell>
                       <TableCell>
                         <div className="font-medium">
-                          ₦{parseFloat(transaction.totalAmount).toLocaleString()}
+                          ₦{(Number(transaction.totalAmount) / 1000000).toLocaleString()}
                         </div>
                       </TableCell>
                       <TableCell>

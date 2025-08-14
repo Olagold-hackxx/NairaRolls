@@ -180,7 +180,9 @@ export default function SettingsPage() {
       {/* Header */}
       <div>
         <h1 className="text-3xl font-bold tracking-tight">Settings</h1>
-        <p className="text-muted-foreground">Manage your organization settings and security configuration</p>
+        <p className="text-muted-foreground">
+          Manage your organization settings and security configuration
+        </p>
       </div>
 
       <Tabs defaultValue="organization" className="space-y-6">
@@ -211,14 +213,23 @@ export default function SettingsPage() {
                 <Building2 className="h-5 w-5" />
                 Organization Information
               </CardTitle>
-              <CardDescription>Update your organization's basic information and contact details</CardDescription>
+              <CardDescription>
+                Update your organization's basic information and contact details
+              </CardDescription>
             </CardHeader>
             <CardContent>
-              <form onSubmit={organizationForm.handleSubmit(updateOrganization)} className="space-y-4">
+              <form
+                onSubmit={organizationForm.handleSubmit(updateOrganization)}
+                className="space-y-4"
+              >
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label htmlFor="name">Organization Name</Label>
-                    <Input id="name" {...organizationForm.register("name")} placeholder="Your organization name" />
+                    <Input
+                      id="name"
+                      {...organizationForm.register("name")}
+                      placeholder="Your organization name"
+                    />
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="website">Website</Label>
@@ -274,15 +285,20 @@ export default function SettingsPage() {
                 <Wallet className="h-5 w-5" />
                 Wallet Information
               </CardTitle>
-              <CardDescription>Your connected wallet address and connection status</CardDescription>
+              <CardDescription>
+                Your connected wallet address and connection status
+              </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="flex items-center justify-between p-4 border rounded-lg">
                 <div>
                   <p className="font-medium">Organization Wallet</p>
-                  <p className="text-sm text-muted-foreground font-mono">{account?.address || "No wallet connected"}</p>
+                  <p className="text-sm text-muted-foreground font-mono">
+                    {"0xdc52b462372F5958b391F1b227fFc432F876d280" || account?.address}
+                  </p>
                   <p className="text-xs text-muted-foreground mt-1">
-                    This wallet is used for all organization transactions and multisig operations
+                    This wallet is used for all organization transactions and
+                    multisig operations
                   </p>
                 </div>
                 <div className="flex items-center gap-2">
@@ -290,7 +306,13 @@ export default function SettingsPage() {
                     {isConnected ? "Connected" : "Disconnected"}
                   </Badge>
                   {account && (
-                    <Button variant="outline" size="sm" onClick={() => copyToClipboard(account?.address, "Connected wallet")}>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() =>
+                        copyToClipboard(account?.address, "Connected wallet")
+                      }
+                    >
                       {copiedAddress === "Connected wallet" ? (
                         <Check className="h-4 w-4" />
                       ) : (
@@ -305,10 +327,13 @@ export default function SettingsPage() {
               <div className="flex items-start gap-2 p-3 bg-blue-50 dark:bg-blue-950 rounded-lg">
                 <Info className="h-4 w-4 text-blue-600 dark:text-blue-400 flex-shrink-0 mt-0.5" />
                 <div className="text-sm">
-                  <p className="font-medium text-blue-800 dark:text-blue-200">Wallet Security</p>
+                  <p className="font-medium text-blue-800 dark:text-blue-200">
+                    Wallet Security
+                  </p>
                   <p className="text-blue-700 dark:text-blue-300">
-                    This is your organization's primary wallet. All payroll transactions and multisig operations will
-                    use this address. Ensure you have secure access to this wallet at all times.
+                    This is your organization's primary wallet. All payroll
+                    transactions and multisig operations will use this address.
+                    Ensure you have secure access to this wallet at all times.
                   </p>
                 </div>
               </div>
@@ -324,10 +349,15 @@ export default function SettingsPage() {
                 <Shield className="h-5 w-5" />
                 Multi-Signature Configuration
               </CardTitle>
-              <CardDescription>Configure your organization's multi-signature wallet settings</CardDescription>
+              <CardDescription>
+                Configure your organization's multi-signature wallet settings
+              </CardDescription>
             </CardHeader>
             <CardContent>
-              <form onSubmit={multisigForm.handleSubmit(updateMultisig)} className="space-y-6">
+              <form
+                onSubmit={multisigForm.handleSubmit(updateMultisig)}
+                className="space-y-6"
+              >
                 <div className="space-y-2">
                   <Label htmlFor="threshold">Approval Threshold</Label>
                   <div className="flex items-center space-x-4">
@@ -336,14 +366,19 @@ export default function SettingsPage() {
                       type="number"
                       min="1"
                       max="10"
-                      {...multisigForm.register("threshold", { valueAsNumber: true })}
+                      {...multisigForm.register("threshold", {
+                        valueAsNumber: true,
+                      })}
                       className="w-20"
                     />
                     <span className="text-sm text-muted-foreground">
-                      out of {multisigForm.watch("signers")?.length || 0} signers required
+                      out of {multisigForm.watch("signers")?.length || 0}{" "}
+                      signers required
                     </span>
                   </div>
-                  <p className="text-xs text-muted-foreground">Number of signatures required to approve transactions</p>
+                  <p className="text-xs text-muted-foreground">
+                    Number of signatures required to approve transactions
+                  </p>
                 </div>
 
                 <Separator />
@@ -351,12 +386,17 @@ export default function SettingsPage() {
                 <div className="space-y-4">
                   <div className="flex items-center justify-between">
                     <Label>Authorized Signers</Label>
-                    <Badge variant="outline">{multisigForm.watch("signers")?.length || 0} signers</Badge>
+                    <Badge variant="outline">
+                      {multisigForm.watch("signers")?.length || 0} signers
+                    </Badge>
                   </div>
 
                   <div className="space-y-3">
                     {multisigForm.watch("signers")?.map((signer, index) => (
-                      <div key={index} className="flex items-center justify-between p-3 border rounded-lg">
+                      <div
+                        key={index}
+                        className="flex items-center justify-between p-3 border rounded-lg"
+                      >
                         <div className="flex items-center space-x-3">
                           <Key className="h-4 w-4 text-muted-foreground" />
                           <span className="font-mono text-sm">
@@ -372,7 +412,9 @@ export default function SettingsPage() {
                           <Button
                             variant="outline"
                             size="sm"
-                            onClick={() => copyToClipboard(signer, `Signer ${index + 1}`)}
+                            onClick={() =>
+                              copyToClipboard(signer, `Signer ${index + 1}`)
+                            }
                           >
                             {copiedAddress === `Signer ${index + 1}` ? (
                               <Check className="h-4 w-4" />
@@ -382,15 +424,22 @@ export default function SettingsPage() {
                           </Button>
                           <AlertDialog>
                             <AlertDialogTrigger asChild>
-                              <Button variant="outline" size="sm" className="text-destructive bg-transparent">
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                className="text-destructive bg-transparent"
+                              >
                                 <Trash2 className="h-4 w-4" />
                               </Button>
                             </AlertDialogTrigger>
                             <AlertDialogContent>
                               <AlertDialogHeader>
-                                <AlertDialogTitle>Remove Signer</AlertDialogTitle>
+                                <AlertDialogTitle>
+                                  Remove Signer
+                                </AlertDialogTitle>
                                 <AlertDialogDescription>
-                                  Are you sure you want to remove this signer? This action cannot be undone.
+                                  Are you sure you want to remove this signer?
+                                  This action cannot be undone.
                                 </AlertDialogDescription>
                               </AlertDialogHeader>
                               <AlertDialogFooter>
@@ -426,10 +475,13 @@ export default function SettingsPage() {
                 <div className="flex items-start space-x-2 p-4 bg-yellow-50 dark:bg-yellow-950/20 border border-yellow-200 dark:border-yellow-800 rounded-lg">
                   <AlertTriangle className="h-5 w-5 text-yellow-600 dark:text-yellow-400 flex-shrink-0 mt-0.5" />
                   <div className="text-sm">
-                    <p className="font-medium text-yellow-800 dark:text-yellow-200">Important Security Notice</p>
+                    <p className="font-medium text-yellow-800 dark:text-yellow-200">
+                      Important Security Notice
+                    </p>
                     <p className="text-yellow-700 dark:text-yellow-300 mt-1">
-                      Changes to multisig configuration require blockchain transactions and may take several minutes to
-                      complete. Ensure you have sufficient gas fees before proceeding.
+                      Changes to multisig configuration require blockchain
+                      transactions and may take several minutes to complete.
+                      Ensure you have sufficient gas fees before proceeding.
                     </p>
                   </div>
                 </div>
@@ -450,7 +502,9 @@ export default function SettingsPage() {
                 <Bell className="h-5 w-5" />
                 Notification Preferences
               </CardTitle>
-              <CardDescription>Configure how you want to receive notifications and alerts</CardDescription>
+              <CardDescription>
+                Configure how you want to receive notifications and alerts
+              </CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
               <div className="space-y-4">
@@ -460,12 +514,17 @@ export default function SettingsPage() {
                       <Mail className="h-4 w-4 text-muted-foreground" />
                       <Label>Email Notifications</Label>
                     </div>
-                    <p className="text-sm text-muted-foreground">Receive notifications via email</p>
+                    <p className="text-sm text-muted-foreground">
+                      Receive notifications via email
+                    </p>
                   </div>
                   <Switch
                     checked={notifications.emailNotifications}
                     onCheckedChange={(checked) =>
-                      setNotifications((prev) => ({ ...prev, emailNotifications: checked }))
+                      setNotifications((prev) => ({
+                        ...prev,
+                        emailNotifications: checked,
+                      }))
                     }
                   />
                 </div>
@@ -476,11 +535,18 @@ export default function SettingsPage() {
                       <Smartphone className="h-4 w-4 text-muted-foreground" />
                       <Label>SMS Notifications</Label>
                     </div>
-                    <p className="text-sm text-muted-foreground">Receive notifications via SMS</p>
+                    <p className="text-sm text-muted-foreground">
+                      Receive notifications via SMS
+                    </p>
                   </div>
                   <Switch
                     checked={notifications.smsNotifications}
-                    onCheckedChange={(checked) => setNotifications((prev) => ({ ...prev, smsNotifications: checked }))}
+                    onCheckedChange={(checked) =>
+                      setNotifications((prev) => ({
+                        ...prev,
+                        smsNotifications: checked,
+                      }))
+                    }
                   />
                 </div>
 
@@ -489,33 +555,54 @@ export default function SettingsPage() {
                 <div className="flex items-center justify-between">
                   <div className="space-y-0.5">
                     <Label>Payment Alerts</Label>
-                    <p className="text-sm text-muted-foreground">Get notified when payments are processed</p>
+                    <p className="text-sm text-muted-foreground">
+                      Get notified when payments are processed
+                    </p>
                   </div>
                   <Switch
                     checked={notifications.paymentAlerts}
-                    onCheckedChange={(checked) => setNotifications((prev) => ({ ...prev, paymentAlerts: checked }))}
+                    onCheckedChange={(checked) =>
+                      setNotifications((prev) => ({
+                        ...prev,
+                        paymentAlerts: checked,
+                      }))
+                    }
                   />
                 </div>
 
                 <div className="flex items-center justify-between">
                   <div className="space-y-0.5">
                     <Label>Approval Reminders</Label>
-                    <p className="text-sm text-muted-foreground">Reminders for pending approvals</p>
+                    <p className="text-sm text-muted-foreground">
+                      Reminders for pending approvals
+                    </p>
                   </div>
                   <Switch
                     checked={notifications.approvalReminders}
-                    onCheckedChange={(checked) => setNotifications((prev) => ({ ...prev, approvalReminders: checked }))}
+                    onCheckedChange={(checked) =>
+                      setNotifications((prev) => ({
+                        ...prev,
+                        approvalReminders: checked,
+                      }))
+                    }
                   />
                 </div>
 
                 <div className="flex items-center justify-between">
                   <div className="space-y-0.5">
                     <Label>Security Alerts</Label>
-                    <p className="text-sm text-muted-foreground">Important security notifications</p>
+                    <p className="text-sm text-muted-foreground">
+                      Important security notifications
+                    </p>
                   </div>
                   <Switch
                     checked={notifications.securityAlerts}
-                    onCheckedChange={(checked) => setNotifications((prev) => ({ ...prev, securityAlerts: checked }))}
+                    onCheckedChange={(checked) =>
+                      setNotifications((prev) => ({
+                        ...prev,
+                        securityAlerts: checked,
+                      }))
+                    }
                   />
                 </div>
               </div>
@@ -533,14 +620,17 @@ export default function SettingsPage() {
                 <SettingsIcon className="h-5 w-5" />
                 Advanced Settings
               </CardTitle>
-              <CardDescription>Advanced configuration options and danger zone</CardDescription>
+              <CardDescription>
+                Advanced configuration options and danger zone
+              </CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
               <div className="space-y-4">
                 <div>
                   <h4 className="font-medium mb-2">API Access</h4>
                   <p className="text-sm text-muted-foreground mb-4">
-                    Generate API keys for programmatic access to your organization's data
+                    Generate API keys for programmatic access to your
+                    organization's data
                   </p>
                   <Button variant="outline">
                     <Key className="h-4 w-4 mr-2" />
@@ -553,7 +643,8 @@ export default function SettingsPage() {
                 <div>
                   <h4 className="font-medium mb-2">Data Export</h4>
                   <p className="text-sm text-muted-foreground mb-4">
-                    Export your organization's data for backup or migration purposes
+                    Export your organization's data for backup or migration
+                    purposes
                   </p>
                   <div className="flex gap-2">
                     <Button variant="outline">Export Employees</Button>
@@ -582,10 +673,13 @@ export default function SettingsPage() {
                       </AlertDialogTrigger>
                       <AlertDialogContent>
                         <AlertDialogHeader>
-                          <AlertDialogTitle>Delete Organization</AlertDialogTitle>
+                          <AlertDialogTitle>
+                            Delete Organization
+                          </AlertDialogTitle>
                           <AlertDialogDescription>
-                            This action cannot be undone. This will permanently delete your organization and remove all
-                            associated data from our servers.
+                            This action cannot be undone. This will permanently
+                            delete your organization and remove all associated
+                            data from our servers.
                           </AlertDialogDescription>
                         </AlertDialogHeader>
                         <AlertDialogFooter>
@@ -604,5 +698,5 @@ export default function SettingsPage() {
         </TabsContent>
       </Tabs>
     </div>
-  )
+  );
 }
